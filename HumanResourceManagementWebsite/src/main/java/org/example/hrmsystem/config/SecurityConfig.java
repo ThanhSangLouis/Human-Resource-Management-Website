@@ -1,4 +1,4 @@
-package org.example.hrmsystem.config;
+﻿package org.example.hrmsystem.config;
 
 import org.example.hrmsystem.security.AppUserDetailsService;
 import org.example.hrmsystem.security.JwtAuthenticationFilter;
@@ -47,15 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/attendance.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/leave.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/worktime.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/departments.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/employees.html").permitAll()
-                        .requestMatchers("/api/attendance/**").authenticated()
-                        .requestMatchers("/api/leave/**").authenticated()
-                        .requestMatchers("/api/departments/**").authenticated()
-                        .requestMatchers("/api/employees/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
