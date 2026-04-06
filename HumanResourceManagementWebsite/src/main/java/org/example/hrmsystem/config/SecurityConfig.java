@@ -1,4 +1,4 @@
-﻿package org.example.hrmsystem.config;
+package org.example.hrmsystem.config;
 
 import org.example.hrmsystem.security.AppUserDetailsService;
 import org.example.hrmsystem.security.JwtAuthenticationFilter;
