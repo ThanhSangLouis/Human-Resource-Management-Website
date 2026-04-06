@@ -1,0 +1,21 @@
+package org.example.hrmsystem.repository;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import org.example.hrmsystem.model.Role;
+import org.example.hrmsystem.model.UserAccount;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserAccountRepository extends JpaRepository<UserAccount, Long> {
+
+    Optional<UserAccount> findByUsername(String username);
+
+    boolean existsByUsername(String username);
+
+    Optional<UserAccount> findByEmployeeId(Long employeeId);
+
+    List<UserAccount> findByEmployeeIdIn(Collection<Long> employeeIds);
+
+    List<UserAccount> findByRole(Role role);
+}
