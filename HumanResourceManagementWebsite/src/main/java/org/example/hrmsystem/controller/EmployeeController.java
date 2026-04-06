@@ -5,10 +5,13 @@ import org.example.hrmsystem.dto.EmployeeRequest;
 import org.example.hrmsystem.dto.EmployeeResponse;
 import org.example.hrmsystem.service.AvatarService;
 import org.example.hrmsystem.service.EmployeeService;
+import org.example.hrmsystem.service.ExcelExportService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @RestController
@@ -25,10 +30,14 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
     private final AvatarService avatarService;
+    private final ExcelExportService excelExportService;
 
-    public EmployeeController(EmployeeService employeeService, AvatarService avatarService) {
+    public EmployeeController(EmployeeService employeeService,
+                              AvatarService avatarService,
+                              ExcelExportService excelExportService) {
         this.employeeService = employeeService;
         this.avatarService = avatarService;
+        this.excelExportService = excelExportService;
     }
 
     /**
@@ -50,6 +59,33 @@ public class EmployeeController {
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, parts[0]));
         return ResponseEntity.ok(employeeService.findAll(keyword, status, departmentId, pageable));
+    }
+
+    /**
+     * GET /api/employees/export?keyword=&status=&departmentId=
+     * Phải khai báo trước /{id} để không bị ánh xạ "export" thành id.
+     * Roles: ADMIN, HR
+     */
+    @GetMapping("/export")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    public ResponseEntity<byte[]> exportExcel(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long departmentId
+    ) {
+        try {
+            byte[] data = excelExportService.exportEmployees(keyword, status, departmentId);
+            String filename = "nhanvien_" +
+                    LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(
+                    ContentDisposition.attachment().filename(filename).build());
+            headers.setContentType(MediaType.parseMediaType(
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            return ResponseEntity.ok().headers(headers).body(data);
+        } catch (IOException ex) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     /**
