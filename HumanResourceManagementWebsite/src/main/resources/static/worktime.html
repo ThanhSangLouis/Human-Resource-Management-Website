@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chấm công & Đơn nghỉ phép – HRM System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f4f6fb; color: #1a2035; min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar { background:#fff; border-bottom:1px solid #e5e9f2; padding:0 32px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .topbar-logo { font-size:18px; font-weight:700; color:#2c3e8c; display:flex; align-items:center; gap:8px; }
+    .topbar-logo span.dot { color:#f5a623; }
+    .topbar-nav { display:flex; gap:28px; }
+    .topbar-nav a { text-decoration:none; color:#5a6a85; font-size:14px; font-weight:500; padding:4px 0; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
+    .topbar-nav a.active, .topbar-nav a:hover { color:#2c3e8c; border-bottom-color:#2c3e8c; }
+    .topbar-user { display:flex; align-items:center; gap:12px; font-size:14px; color:#5a6a85; }
+    .avatar-circle { width:36px; height:36px; border-radius:50%; background:#2c3e8c; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
+    .layout { display:flex; flex:1; }
+    .sidebar { width:220px; background:#fff; border-right:1px solid #e5e9f2; padding:24px 0; flex-shrink:0; }
+    .sidebar-section-title { font-size:11px; font-weight:700; color:#8a94a6; letter-spacing:.8px; text-transform:uppercase; padding:0 20px 8px; margin-top:16px; }
+    .sidebar-item { display:flex; align-items:center; gap:10px; padding:9px 20px; font-size:13.5px; color:#5a6a85; cursor:pointer; border-left:3px solid transparent; transition:all .15s; text-decoration:none; }
+    .sidebar-item:hover { background:#f0f4ff; color:#2c3e8c; }
+    .sidebar-item.active { background:#eef2ff; color:#2c3e8c; font-weight:600; border-left-color:#2c3e8c; }
+    .main { flex:1; padding:28px 32px; overflow-y:auto; }
+    .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .page-title { font-size:14px; font-weight:600; color:#8a94a6; letter-spacing:.3px; text-transform:uppercase; }
+    .btn-ghost { background:none; border:1px solid #dde2ee; border-radius:8px; padding:9px 18px; font-size:13.5px; font-weight:500; color:#5a6a85; cursor:pointer; transition:all .15s; }
+    .btn-ghost:hover { border-color:#2c3e8c; color:#2c3e8c; }
+
+    .card { background:#fff; border-radius:12px; border:1px solid #e5e9f2; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+    .wt-card-head { background:linear-gradient(135deg,#2c3e8c,#1e2d6e); padding:22px 26px; color:#fff; }
+    .wt-card-head h2 { font-size:18px; font-weight:700; margin-bottom:4px; }
+    .wt-card-head p { font-size:13px; opacity:.85; }
+    .wt-live { font-size:26px; font-weight:700; margin-top:10px; letter-spacing:1px; }
+    .wt-live-date { font-size:12px; opacity:.8; margin-top:4px; }
+    .card-body { padding:22px 26px; }
+
+    .wt-inner-tabs { display:flex; gap:4px; border-bottom:2px solid #e5e9f2; margin-bottom:18px; }
+    .wt-inner-tab { padding:8px 16px; border:none; background:none; font-size:13.5px; font-weight:600; color:#8a94a6; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; }
+    .wt-inner-tab.active { color:#2c3e8c; border-bottom-color:#2c3e8c; }
+
+    .wt-status-panel { background:#f8f9fc; border:1px solid #e5e9f2; border-radius:10px; padding:16px; margin-bottom:16px; }
+    .wt-stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+    .wt-stat { background:#fff; border-radius:8px; padding:12px; text-align:center; border:1px solid #e5e9f2; }
+    .wt-stat .v { font-size:17px; font-weight:700; color:#2c3e8c; }
+    .wt-stat .l { font-size:11px; color:#8a94a6; margin-top:2px; }
+
+    .wt-badge { display:inline-flex; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .wt-badge.none { background:#f0f2f8; color:#8a94a6; }
+    .wt-badge.present { background:#e6f4ea; color:#276749; }
+    .wt-badge.late { background:#fef3c7; color:#b45309; }
+    .wt-badge.absent { background:#fee2e2; color:#991b1b; }
+    .wt-badge.half { background:#dbeafe; color:#1d4ed8; }
+
+    .form-group { margin-bottom:14px; }
+    label { display:block; font-size:13px; font-weight:600; color:#5a6a85; margin-bottom:5px; }
+    input[type=text],input[type=month],input[type=date],textarea,select {
+      width:100%; padding:9px 12px; border:1px solid #dde2ee; border-radius:8px; font-size:13.5px; font-family:inherit; color:#1a2035; outline:none; }
+    input:focus,textarea:focus,select:focus { border-color:#2c3e8c; }
+    textarea { resize:vertical; min-height:70px; }
+    .row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    .btn-primary { background:#2c3e8c; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:13.5px; font-weight:600; cursor:pointer; }
+    .btn-primary:hover { background:#1e2d6e; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-danger { background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:13.5px; font-weight:600; cursor:pointer; }
+    .btn-danger:hover { background:#c53030; }
+    .btn-danger:disabled { opacity:.5; cursor:not-allowed; }
+    .wt-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
+
+    .wt-filter { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:14px; }
+    .wt-filter .fg { display:flex; flex-direction:column; gap:4px; }
+    .wt-filter label { font-size:12px; }
+
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:#f8f9fc; border-bottom:1px solid #e5e9f2; }
+    th { text-align:left; padding:11px 14px; font-size:12px; font-weight:600; color:#5a6a85; }
+    td { padding:10px 14px; font-size:13px; border-bottom:1px solid #f0f2f8; }
+    tbody tr:hover { background:#fafbff; }
+    .wt-empty td { text-align:center; color:#8a94a6; padding:28px; }
+
+    .wt-pg { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; }
+    .wt-pg button { border:1px solid #dde2ee; background:#fff; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:13px; }
+    .wt-pg button:disabled { opacity:.4; cursor:not-allowed; }
+
+    .wt-leave-grid { display:grid; grid-template-columns:minmax(280px,360px) 1fr; gap:20px; align-items:start; }
+    @media (max-width:900px) { .wt-leave-grid { grid-template-columns:1fr; } .wt-stat-grid { grid-template-columns:1fr; } .wt-actions { grid-template-columns:1fr; } }
+
+    .chip { font-size:12px; font-weight:600; padding:4px 10px; border-radius:20px; background:#eef2ff; color:#2c3e8c; border:1px solid #dde2ee; display:inline-flex; margin:2px; }
+    .lv-pending { background:#fff8e6; color:#b45309; border-color:#fcd34d; }
+    .lv-approved { background:#e6f4ea; color:#276749; border-color:#86efac; }
+    .lv-rejected { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+
+    #toast-container { position:fixed; bottom:24px; right:24px; z-index:300; }
+    .toast { background:#fff; border-radius:10px; padding:12px 16px; box-shadow:0 6px 24px rgba(0,0,0,.14); font-size:13px; border-left:4px solid #38a169; min-width:220px; }
+    .toast.err { border-left-color:#e53e3e; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2c3e8c"/><path d="M8 20V10l6-4 6 4v10H8z" fill="#fff" opacity=".9"/><rect x="11.5" y="14" width="5" height="6" rx="1" fill="#2c3e8c"/></svg>
+    HRM<span class="dot">.</span>System
+  </div>
+  <nav class="topbar-nav">
+    <a href="#">Trang chủ</a><a href="#">Dịch vụ</a><a href="#" class="active">Quản lý</a><a href="#">Báo cáo</a>
+  </nav>
+  <div class="topbar-user">
+    <span id="topbar-username">–</span>
+    <div class="avatar-circle" id="topbar-avatar">U</div>
+    <button class="btn-ghost" onclick="logout()" style="font-size:12px;padding:5px 10px;">Đăng xuất</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-section-title">Quản lý tài khoản</div>
+    <a class="sidebar-item" href="#"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Hồ sơ cá nhân</a>
+    <a class="sidebar-item" href="#"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a4 4 0 0 0-8 0v2"/></svg> Đổi mật khẩu</a>
+    <div class="sidebar-section-title">Công cụ quản lý</div>
+    <a class="sidebar-item" href="employees.html"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Quản lý nhân viên</a>
+    <a class="sidebar-item" href="departments.html"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6"/></svg> Danh sách phòng ban</a>
+    <a class="sidebar-item" id="nav-wt-att" href="worktime.html#attendance"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Quản lý chấm công</a>
+    <a class="sidebar-item" id="nav-wt-leave" href="worktime.html#leave"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Đơn nghỉ phép</a>
+  </aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title" id="wt-page-desc">Chấm công & đơn nghỉ phép</div>
+    </div>
+
+    <!-- PANEL: Attendance -->
+    <div id="panel-attendance">
+      <div class="card">
+        <div class="wt-card-head">
+          <h2>Chấm công</h2>
+          <p>Ghi nhận giờ vào – ra và xem lịch sử</p>
+          <div class="wt-live" id="wt-liveTime">00:00:00</div>
+          <div class="wt-live-date" id="wt-liveDate">–</div>
+        </div>
+        <div class="card-body">
+          <div class="wt-inner-tabs">
+            <button type="button" class="wt-inner-tab active" id="wt-it-today" onclick="switchAttInner('today')">Hôm nay</button>
+            <button type="button" class="wt-inner-tab" id="wt-it-hist" onclick="switchAttInner('history')">Lịch sử</button>
+          </div>
+
+          <div id="wt-tab-today">
+            <div class="wt-status-panel">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span style="font-size:13px;font-weight:600;color:#2c3e8c;">Tóm tắt hôm nay</span>
+                <span id="wt-statusBadge" class="wt-badge none">—</span>
+              </div>
+              <div class="wt-stat-grid">
+                <div class="wt-stat"><div class="v" id="wt-statIn">—</div><div class="l">Vào ca</div></div>
+                <div class="wt-stat"><div class="v" id="wt-statOut">—</div><div class="l">Ra ca</div></div>
+                <div class="wt-stat"><div class="v" id="wt-statHrs">0h</div><div class="l">Giờ làm</div></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="wt-note">Ghi chú (tuỳ chọn)</label>
+              <input type="text" id="wt-note" placeholder="VD: làm từ xa, đi muộn do kẹt xe..." />
+            </div>
+            <div class="wt-actions">
+              <button type="button" class="btn-primary" id="wt-btnIn">Check-in</button>
+              <button type="button" class="btn-danger" id="wt-btnOut">Check-out</button>
+            </div>
+          </div>
+
+          <div id="wt-tab-history" style="display:none;">
+            <div class="wt-filter">
+              <div class="fg"><label for="wt-filterDate">Một ngày (tuỳ chọn)</label><input type="date" id="wt-filterDate" /></div>
+              <div class="fg"><label for="wt-filterMonth">Tháng</label><input type="month" id="wt-filterMonth" /></div>
+              <div class="fg" id="wt-hist-dept-wrap" style="display:none;"><label for="wt-filterDept">Phòng ban</label>
+                <select id="wt-filterDept" style="min-width:180px;"><option value="">Tất cả phòng ban</option></select>
+              </div>
+              <div class="fg"><label for="wt-filterStatus">Trạng thái</label>
+                <select id="wt-filterStatus" style="min-width:160px;">
+                  <option value="">Tất cả</option>
+                  <option value="PRESENT">Có mặt</option>
+                  <option value="LATE">Muộn</option>
+                  <option value="ABSENT">Vắng</option>
+                  <option value="HALF_DAY">Nửa ngày</option>
+                  <option value="ON_LEAVE">Nghỉ phép</option>
+                </select>
+              </div>
+              <button type="button" class="btn-primary" onclick="loadHistory(0)">Tìm kiếm</button>
+            </div>
+            <div id="wt-histSummary" style="font-size:12px;color:#8a94a6;margin-bottom:8px;"></div>
+            <div class="card" style="box-shadow:none;border:1px solid #e5e9f2;">
+              <table>
+                <thead id="wt-historyThead"></thead>
+                <tbody id="wt-historyBody"><tr class="wt-empty"><td colspan="8">Chọn tháng và nhấn Tìm kiếm</td></tr></tbody>
+              </table>
+            </div>
+            <div class="wt-pg" id="wt-historyPg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL: Leave -->
+    <div id="panel-leave" style="display:none;">
+      <div class="wt-leave-grid">
+        <div class="card">
+          <div class="card-body" style="padding-top:20px;">
+            <div class="page-title" style="margin-bottom:14px;text-transform:none;font-size:15px;color:#1a2035;">Tạo đơn nghỉ phép</div>
+            <div class="form-group">
+              <label>Loại nghỉ</label>
+              <select id="wt-lv-type">
+                <option value="">— Chọn —</option>
+                <option value="ANNUAL">Nghỉ phép năm</option>
+                <option value="SICK">Ốm</option>
+                <option value="MATERNITY">Thai sản</option>
+                <option value="UNPAID">Không lương</option>
+                <option value="OTHER">Khác</option>
+              </select>
+            </div>
+            <div class="row-2">
+              <div class="form-group"><label>Từ ngày</label><input type="date" id="wt-lv-start" /></div>
+              <div class="form-group"><label>Đến ngày</label><input type="date" id="wt-lv-end" /></div>
+            </div>
+            <div id="wt-lv-days" style="font-size:12px;color:#2c3e8c;min-height:18px;margin:-6px 0 10px;"></div>
+            <div class="form-group"><label>Lý do</label><textarea id="wt-lv-reason" placeholder="Mô tả ngắn..."></textarea></div>
+            <button type="button" class="btn-primary" style="width:100%;" id="wt-lv-submit">Gửi đơn</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding-top:20px;">
+            <div class="page-title" style="margin-bottom:14px;text-transform:none;font-size:15px;color:#1a2035;">Đơn của tôi</div>
+            <div id="wt-lv-summary" style="margin-bottom:10px;"></div>
+            <table>
+              <thead><tr><th>Loại</th><th>Từ</th><th>Đến</th><th>Ngày</th><th>TT</th><th>Lý do</th></tr></thead>
+              <tbody id="wt-lv-tbody"><tr class="wt-empty"><td colspan="6">Đang tải...</td></tr></tbody>
+            </table>
+            <div class="wt-pg" id="wt-lv-pg"></div>
+          </div>
+        </div>
+      </div>
+      <div id="wt-leave-review" class="card" style="display:none;margin-top:20px;">
+        <div class="card-body" style="padding-top:20px;">
+          <div class="page-title" style="margin-bottom:14px;text-transform:none;font-size:15px;color:#1a2035;">Đơn chờ duyệt (HR / Manager)</div>
+          <table>
+            <thead><tr><th>NV</th><th>Loại</th><th>Từ</th><th>Đến</th><th>Ngày</th><th>Lý do</th><th>Thao tác</th></tr></thead>
+            <tbody id="wt-lv-pending-tbody"><tr class="wt-empty"><td colspan="7">Đang tải...</td></tr></tbody>
+          </table>
+          <div class="wt-pg" id="wt-lv-pending-pg"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const API = '/api';
+let token = localStorage.getItem('hrm_access_token') || '';
+let currentUser = null;
+try { currentUser = JSON.parse(localStorage.getItem('hrm_user') || 'null'); } catch (_) {}
+let currentRole = null;
+let wtClockTimer = null;
+let wtHistoryLastPage = 0;
+
+const DAYS = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+const MONTHS = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+
+function logout() {
+  fetch(API + '/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+  localStorage.removeItem('hrm_access_token');
+  localStorage.removeItem('hrm_user');
+  localStorage.removeItem('hrm_refresh_token');
+  window.location.href = '/login';
+}
+
+function toast(msg, err) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (err ? ' err' : '');
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function decodeJwtPayload(t) {
+  const p = t.split('.');
+  if (p.length < 2) throw new Error('jwt');
+  const b64 = p[1].replace(/-/g,'+').replace(/_/g,'/');
+  const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
+  return JSON.parse(atob(pad));
+}
+
+async function apiFetch(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API + path, { ...opts, headers, credentials: 'include' });
+  const text = await res.text();
+  let data = {};
+  try { data = text ? JSON.parse(text) : {}; } catch (_) {}
+  if (res.status === 401) { logout(); }
+  return { ok: res.ok, status: res.status, data };
+}
+
+function renderUser() {
+  const u = (currentUser && currentUser.username) || '?';
+  document.getElementById('topbar-username').textContent = u;
+  document.getElementById('topbar-avatar').textContent = u.charAt(0).toUpperCase();
+}
+
+function applyMainTab() {
+  const leave = location.hash === '#leave';
+  document.getElementById('panel-attendance').style.display = leave ? 'none' : 'block';
+  document.getElementById('panel-leave').style.display = leave ? 'block' : 'none';
+  document.getElementById('nav-wt-att').classList.toggle('active', !leave);
+  document.getElementById('nav-wt-leave').classList.toggle('active', leave);
+  document.getElementById('wt-page-desc').textContent = leave ? 'Đơn nghỉ phép' : 'Chấm công';
+  if (!leave) {
+    loadToday();
+    startClock();
+  } else {
+    if (wtClockTimer) clearInterval(wtClockTimer);
+    initLeavePanel();
+  }
+}
+
+function startClock() {
+  function tick() {
+    const n = new Date();
+    document.getElementById('wt-liveTime').textContent =
+      String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0') + ':' + String(n.getSeconds()).padStart(2,'0');
+    document.getElementById('wt-liveDate').textContent =
+      DAYS[n.getDay()] + ', ' + n.getDate() + '/' + MONTHS[n.getMonth()] + '/' + n.getFullYear();
+  }
+  tick();
+  if (wtClockTimer) clearInterval(wtClockTimer);
+  wtClockTimer = setInterval(tick, 1000);
+}
+
+function switchAttInner(t) {
+  const today = t === 'today';
+  document.getElementById('wt-tab-today').style.display = today ? 'block' : 'none';
+  document.getElementById('wt-tab-history').style.display = today ? 'none' : 'block';
+  document.getElementById('wt-it-today').classList.toggle('active', today);
+  document.getElementById('wt-it-hist').classList.toggle('active', !today);
+  if (!today) {
+    const showDept = currentRole === 'ADMIN' || currentRole === 'HR';
+    document.getElementById('wt-hist-dept-wrap').style.display = showDept ? 'flex' : 'none';
+    if (showDept && !window._wtHistDeptLoaded) {
+      window._wtHistDeptLoaded = true;
+      loadDeptOptionsForHistory();
+    }
+    const mon = document.getElementById('wt-filterMonth');
+    if (!mon.value && !document.getElementById('wt-filterDate').value) {
+      const n = new Date();
+      mon.value = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0');
+      wtHistoryLastPage = 0;
+    }
+    loadHistory(wtHistoryLastPage);
+  }
+}
+
+async function loadDeptOptionsForHistory() {
+  const sel = document.getElementById('wt-filterDept');
+  const { ok, data } = await apiFetch('/departments?page=0&size=100&sort=name,asc');
+  if (!ok || !data.content) return;
+  sel.innerHTML = '<option value="">Tất cả phòng ban</option>';
+  data.content.forEach(function (d) {
+    const o = document.createElement('option');
+    o.value = d.id;
+    o.textContent = d.name;
+    sel.appendChild(o);
+  });
+}
+
+function refreshHistoryIfVisible() {
+  const hist = document.getElementById('wt-tab-history');
+  if (!hist || hist.style.display === 'none') return;
+  loadHistory(wtHistoryLastPage);
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function fmtHours(num) {
+  if (num == null || num === '') return '0h';
+  const v = parseFloat(num), h = Math.floor(v), m = Math.round((v - h) * 60);
+  return m ? h + 'h ' + m + 'p' : h + 'h';
+}
+function fmtDateVi(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+
+function renderAttStatus(data) {
+  const s = data.status;
+  let cls = 'none', txt = 'Chưa có dữ liệu';
+  if (s === 'PRESENT') { cls = 'present'; txt = 'Có mặt'; }
+  else if (s === 'LATE') { cls = 'late'; txt = 'Muộn'; }
+  else if (s === 'ABSENT') { cls = 'absent'; txt = 'Vắng'; }
+  else if (s === 'HALF_DAY' || s === 'ON_LEAVE') { cls = 'half'; txt = s === 'ON_LEAVE' ? 'Nghỉ phép' : 'Nửa ngày'; }
+  const b = document.getElementById('wt-statusBadge');
+  b.className = 'wt-badge ' + cls;
+  b.textContent = txt;
+  document.getElementById('wt-statIn').textContent = fmtTime(data.checkIn);
+  document.getElementById('wt-statOut').textContent = fmtTime(data.checkOut);
+  document.getElementById('wt-statHrs').textContent = fmtHours(data.workHours);
+  document.getElementById('wt-btnIn').disabled = !!data.checkIn;
+  document.getElementById('wt-btnOut').disabled = !data.checkIn || !!data.checkOut;
+}
+
+async function loadToday() {
+  const { ok, data } = await apiFetch('/attendance/today');
+  if (ok) renderAttStatus(data);
+}
+
+document.getElementById('wt-btnIn').onclick = async () => {
+  const note = document.getElementById('wt-note').value.trim();
+  const q = note ? '?note=' + encodeURIComponent(note) : '';
+  const btn = document.getElementById('wt-btnIn');
+  btn.disabled = true;
+  const { ok, data } = await apiFetch('/attendance/check-in' + q, { method: 'POST' });
+  btn.disabled = false;
+  if (!ok) { toast(data.message || 'Check-in thất bại', true); return; }
+  document.getElementById('wt-note').value = '';
+  toast(data.message || 'Check-in thành công');
+  renderAttStatus(data);
+  refreshHistoryIfVisible();
+};
+document.getElementById('wt-btnOut').onclick = async () => {
+  const note = document.getElementById('wt-note').value.trim();
+  const q = note ? '?note=' + encodeURIComponent(note) : '';
+  const btn = document.getElementById('wt-btnOut');
+  btn.disabled = true;
+  const { ok, data } = await apiFetch('/attendance/check-out' + q, { method: 'POST' });
+  btn.disabled = false;
+  if (!ok) { toast(data.message || 'Check-out thất bại', true); return; }
+  document.getElementById('wt-note').value = '';
+  toast(data.message || 'Check-out thành công');
+  renderAttStatus(data);
+  refreshHistoryIfVisible();
+};
+
+const HSTATUS = {
+  PRESENT: ['Có mặt'], LATE: ['Muộn'], ABSENT: ['Vắng'], HALF_DAY: ['Nửa ngày'], ON_LEAVE: ['Nghỉ phép']
+};
+function buildHistHead() {
+  const emp = currentRole === 'EMPLOYEE';
+  document.getElementById('wt-historyThead').innerHTML = '<tr><th>Ngày</th>' +
+    (emp ? '' : '<th>Nhân viên</th>') + '<th>Vào</th><th>Ra</th><th>Giờ LV</th><th>TC</th><th>TT</th><th>Ghi chú</th></tr>';
+}
+async function loadHistory(page) {
+  const d = document.getElementById('wt-filterDate').value;
+  const m = document.getElementById('wt-filterMonth').value;
+  const st = document.getElementById('wt-filterStatus').value;
+  const dept = document.getElementById('wt-filterDept').value;
+  let url = '/attendance/history?page=' + page + '&size=20';
+  if (d) url += '&date=' + encodeURIComponent(d);
+  else if (m) url += '&month=' + encodeURIComponent(m);
+  if (st) url += '&status=' + encodeURIComponent(st);
+  if (dept && (currentRole === 'ADMIN' || currentRole === 'HR')) url += '&departmentId=' + encodeURIComponent(dept);
+  if (!currentRole) {
+    try {
+      const pl = decodeJwtPayload(token);
+      currentRole = pl.role || null;
+    } catch (_) {}
+  }
+  const colSpan = currentRole === 'EMPLOYEE' ? 7 : 8;
+  document.getElementById('wt-historyBody').innerHTML = '<tr class="wt-empty"><td colspan="' + colSpan + '">Đang tải...</td></tr>';
+  const { ok, data } = await apiFetch(url);
+  if (!ok) {
+    document.getElementById('wt-historyBody').innerHTML = '<tr class="wt-empty"><td colspan="' + colSpan + '">' + (data.message || 'Lỗi tải') + '</td></tr>';
+    return;
+  }
+  wtHistoryLastPage = typeof data.page === 'number' ? data.page : page;
+  buildHistHead();
+  const emp = currentRole === 'EMPLOYEE';
+  const rows = data.content || [];
+  document.getElementById('wt-histSummary').textContent = 'Hiển thị ' + rows.length + ' / ' + (data.totalElements||0) + ' bản ghi — ' + (data.period || data.month || '');
+  if (!rows.length) {
+    document.getElementById('wt-historyBody').innerHTML = '<tr class="wt-empty"><td colspan="' + colSpan + '">Không có dữ liệu</td></tr>';
+    document.getElementById('wt-historyPg').innerHTML = '';
+    return;
+  }
+  document.getElementById('wt-historyBody').innerHTML = rows.map(a => '<tr>' +
+    '<td style="font-weight:600">' + fmtDateVi(a.attendanceDate) + '</td>' +
+    (emp ? '' : '<td>' + (a.employeeName||'—') + '</td>') +
+    '<td>' + fmtTime(a.checkIn) + '</td><td>' + fmtTime(a.checkOut) + '</td>' +
+    '<td>' + fmtHours(a.workHours) + '</td><td>' + (a.overtimeHours>0?fmtHours(a.overtimeHours):'—') + '</td>' +
+    '<td>' + (HSTATUS[a.status]||[a.status||'—'])[0] + '</td>' +
+    '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="' + (a.note||'') + '">' + (a.note||'—') + '</td></tr>').join('');
+  const tp = data.totalPages || 0, p = data.page || 0;
+  const pg = document.getElementById('wt-historyPg');
+  pg.innerHTML = '';
+  if (tp <= 1) return;
+  const prev = document.createElement('button');
+  prev.textContent = '← Trước';
+  prev.disabled = p === 0;
+  prev.onclick = () => loadHistory(p - 1);
+  pg.appendChild(prev);
+  const mid = document.createElement('span');
+  mid.style.margin = '0 8px';
+  mid.style.fontSize = '13px';
+  mid.style.color = '#5a6a85';
+  mid.textContent = (p+1) + ' / ' + tp;
+  pg.appendChild(mid);
+  const next = document.createElement('button');
+  next.textContent = 'Sau →';
+  next.disabled = p >= tp - 1;
+  next.onclick = () => loadHistory(p + 1);
+  pg.appendChild(next);
+}
+
+/* Leave */
+const LV_TYPE = { ANNUAL:'Phép năm', SICK:'Ốm', MATERNITY:'Thai sản', UNPAID:'Không lương', OTHER:'Khác' };
+let leaveInited = false;
+let wtPendingLastPage = 0;
+function canReviewLeaves() {
+  return currentRole === 'ADMIN' || currentRole === 'HR' || currentRole === 'MANAGER';
+}
+function initLeavePanel() {
+  const rev = document.getElementById('wt-leave-review');
+  if (canReviewLeaves()) { rev.style.display = 'block'; loadPendingLeaves(0); }
+  else { rev.style.display = 'none'; }
+  if (leaveInited) { loadLeaves(0); return; }
+  leaveInited = true;
+  const t = new Date().toISOString().split('T')[0];
+  document.getElementById('wt-lv-start').min = t;
+  document.getElementById('wt-lv-end').min = t;
+  document.getElementById('wt-lv-start').addEventListener('change', () => {
+    const s = document.getElementById('wt-lv-start').value;
+    document.getElementById('wt-lv-end').min = s || t;
+    updLvDays();
+  });
+  document.getElementById('wt-lv-end').addEventListener('change', updLvDays);
+  document.getElementById('wt-lv-submit').onclick = submitLeave;
+  loadLeaves(0);
+}
+async function loadPendingLeaves(page) {
+  if (!canReviewLeaves()) return;
+  wtPendingLastPage = page;
+  const { ok, data } = await apiFetch('/leave/pending?page=' + page + '&size=10');
+  const tb = document.getElementById('wt-lv-pending-tbody');
+  if (!ok) {
+    tb.innerHTML = '<tr class="wt-empty"><td colspan="7">' + (data.message || 'Không tải được') + '</td></tr>';
+    return;
+  }
+  const items = data.content || [];
+  if (!items.length) {
+    tb.innerHTML = '<tr class="wt-empty"><td colspan="7">Không có đơn chờ duyệt</td></tr>';
+    document.getElementById('wt-lv-pending-pg').innerHTML = '';
+    return;
+  }
+  tb.innerHTML = items.map(lr => '<tr data-id="' + lr.id + '"><td>' + (lr.employeeName||'—') + '</td><td>' + (LV_TYPE[lr.leaveType]||lr.leaveType) + '</td><td>' + fmtDateVi(lr.startDate) + '</td><td>' + fmtDateVi(lr.endDate) + '</td><td>' + lr.totalDays + '</td><td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">' + (lr.reason||'—') + '</td><td><button type="button" class="btn-primary" style="padding:6px 10px;font-size:12px;margin-right:6px" onclick="reviewLeave(' + lr.id + ',true)">Duyệt</button><button type="button" class="btn-ghost" style="padding:6px 10px;font-size:12px;color:#e53e3e;border-color:#fca5a5" onclick="reviewLeave(' + lr.id + ',false)">Từ chối</button></td></tr>').join('');
+  const pg = document.getElementById('wt-lv-pending-pg');
+  pg.innerHTML = '';
+  const tp = data.totalPages || 0, p = data.page || 0;
+  if (tp <= 1) return;
+  const prev = document.createElement('button');
+  prev.textContent = '← Trước';
+  prev.disabled = p === 0;
+  prev.onclick = () => loadPendingLeaves(p - 1);
+  pg.appendChild(prev);
+  const sp = document.createElement('span');
+  sp.style.margin = '0 8px';
+  sp.style.fontSize = '13px';
+  sp.style.color = '#5a6a85';
+  sp.textContent = (p+1) + '/' + tp;
+  pg.appendChild(sp);
+  const next = document.createElement('button');
+  next.textContent = 'Sau →';
+  next.disabled = p >= tp - 1;
+  next.onclick = () => loadPendingLeaves(p + 1);
+  pg.appendChild(next);
+}
+async function reviewLeave(id, approve) {
+  const path = '/leave/' + id + (approve ? '/approve' : '/reject');
+  const { ok, data } = await apiFetch(path, { method: 'PATCH' });
+  if (!ok) { toast(data.message || 'Thao tác thất bại', true); return; }
+  toast(data.message || (approve ? 'Đã duyệt' : 'Đã từ chối'));
+  loadPendingLeaves(wtPendingLastPage);
+}
+function updLvDays() {
+  const s = document.getElementById('wt-lv-start').value, e = document.getElementById('wt-lv-end').value;
+  const el = document.getElementById('wt-lv-days');
+  if (!s || !e) { el.textContent = ''; return; }
+  const diff = Math.round((new Date(e) - new Date(s)) / 864e5) + 1;
+  el.textContent = diff < 1 ? 'Ngày kết thúc phải ≥ ngày bắt đầu' : ('Số ngày: ' + diff);
+  el.style.color = diff < 1 ? '#e53e3e' : '#2c3e8c';
+}
+async function loadLeaves(page) {
+  const { ok, data } = await apiFetch('/leave/my?page=' + page + '&size=8');
+  const tb = document.getElementById('wt-lv-tbody');
+  if (!ok) { tb.innerHTML = '<tr class="wt-empty"><td colspan="6">Không tải được</td></tr>'; return; }
+  const items = data.content || [];
+  const sum = document.getElementById('wt-lv-summary');
+  if (!items.length) {
+    sum.innerHTML = '';
+    tb.innerHTML = '<tr class="wt-empty"><td colspan="6">Chưa có đơn</td></tr>';
+    document.getElementById('wt-lv-pg').innerHTML = '';
+    return;
+  }
+  sum.innerHTML = '<span class="chip">Tổng: ' + (data.totalElements||0) + '</span>';
+  tb.innerHTML = items.map(lr => {
+    const stc = lr.status === 'PENDING' ? 'lv-pending' : lr.status === 'APPROVED' ? 'lv-approved' : 'lv-rejected';
+    const stl = lr.status === 'PENDING' ? 'Chờ duyệt' : lr.status === 'APPROVED' ? 'Đã duyệt' : 'Từ chối';
+    return '<tr><td>' + (LV_TYPE[lr.leaveType]||lr.leaveType) + '</td><td>' + fmtDateVi(lr.startDate) + '</td><td>' + fmtDateVi(lr.endDate) + '</td><td>' + lr.totalDays + '</td><td><span class="chip ' + stc + '">' + stl + '</span></td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">' + (lr.reason||'—') + '</td></tr>';
+  }).join('');
+  const pg = document.getElementById('wt-lv-pg');
+  pg.innerHTML = '';
+  const tp = data.totalPages || 0, p = data.page || 0;
+  if (tp <= 1) return;
+  const prev = document.createElement('button');
+  prev.textContent = '← Trước';
+  prev.disabled = p === 0;
+  prev.onclick = () => loadLeaves(p - 1);
+  pg.appendChild(prev);
+  const sp = document.createElement('span');
+  sp.style.margin = '0 8px';
+  sp.style.fontSize = '13px';
+  sp.style.color = '#5a6a85';
+  sp.textContent = (p+1) + '/' + tp;
+  pg.appendChild(sp);
+  const next = document.createElement('button');
+  next.textContent = 'Sau →';
+  next.disabled = p >= tp - 1;
+  next.onclick = () => loadLeaves(p + 1);
+  pg.appendChild(next);
+}
+async function submitLeave() {
+  const type = document.getElementById('wt-lv-type').value;
+  const sd = document.getElementById('wt-lv-start').value;
+  const ed = document.getElementById('wt-lv-end').value;
+  if (!type) { toast('Chọn loại nghỉ', true); return; }
+  if (!sd || !ed) { toast('Chọn đủ ngày', true); return; }
+  if (ed < sd) { toast('Ngày kết thúc không hợp lệ', true); return; }
+  const btn = document.getElementById('wt-lv-submit');
+  btn.disabled = true;
+  const { ok, data } = await apiFetch('/leave', {
+    method: 'POST',
+    body: JSON.stringify({ leaveType: type, startDate: sd, endDate: ed, reason: document.getElementById('wt-lv-reason').value.trim() || null })
+  });
+  btn.disabled = false;
+  if (!ok) { toast(data.message || 'Gửi thất bại', true); return; }
+  toast(data.message || 'Đã gửi đơn');
+  document.getElementById('wt-lv-type').value = '';
+  document.getElementById('wt-lv-start').value = '';
+  document.getElementById('wt-lv-end').value = '';
+  document.getElementById('wt-lv-reason').value = '';
+  document.getElementById('wt-lv-days').textContent = '';
+  loadLeaves(0);
+  if (canReviewLeaves()) loadPendingLeaves(wtPendingLastPage);
+}
+
+(function boot() {
+  if (!token) { window.location.href = '/login'; return; }
+  try {
+    const pl = decodeJwtPayload(token);
+    if (Date.now() >= (pl.exp * 1000)) { logout(); return; }
+    currentRole = pl.role || (currentUser && currentUser.role) || null;
+  } catch (_) { window.location.href = '/login'; return; }
+  renderUser();
+  if (!location.hash || location.hash === '#') location.hash = '#attendance';
+  applyMainTab();
+  window.addEventListener('hashchange', applyMainTab);
+})();
+</script>
+</body>
+</html>
