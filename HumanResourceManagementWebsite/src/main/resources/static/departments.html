@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Phòng ban – HRM System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="/frags.js?v=3"></script>
+  <style>
+    /* ──────────── RESET & BASE ──────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f6fb;
+      color: #1a2035;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ──────────── TOPBAR ──────────── */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e5e9f2;
+      padding: 10px 32px;
+      min-height: 60px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .topbar-logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e8c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .topbar-logo span.dot { color: #f5a623; }
+    .topbar-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; max-width: 100%; }
+    .topbar-nav a {
+      text-decoration: none;
+      color: #5a6a85;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 4px 0;
+      border-bottom: 2px solid transparent;
+      transition: color .2s, border-color .2s;
+    }
+    .topbar-nav a.active,
+    .topbar-nav a:hover { color: #2c3e8c; border-bottom-color: #2c3e8c; }
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #5a6a85;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .avatar-circle {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #2c3e8c;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ──────────── LAYOUT ──────────── */
+    .layout { display: flex; flex: 1; }
+
+    /* ──────────── SIDEBAR ──────────── */
+    .sidebar {
+      width: 220px;
+      background: #fff;
+      border-right: 1px solid #e5e9f2;
+      padding: 24px 0;
+      flex-shrink: 0;
+    }
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8a94a6;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      padding: 0 20px 8px;
+      margin-top: 16px;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      font-size: 13.5px;
+      color: #5a6a85;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+      text-decoration: none;
+    }
+    .sidebar-item:hover { background: #f0f4ff; color: #2c3e8c; }
+    .sidebar-item.active {
+      background: #eef2ff;
+      color: #2c3e8c;
+      font-weight: 600;
+      border-left-color: #2c3e8c;
+    }
+    .sidebar-item svg { flex-shrink: 0; }
+
+    /* ──────────── MAIN CONTENT ──────────── */
+    .main {
+      flex: 1;
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+
+    /* ──────────── PAGE HEADER ──────────── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .page-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #8a94a6;
+      letter-spacing: .3px;
+      text-transform: uppercase;
+    }
+    .btn-primary {
+      background: #2c3e8c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background .2s, transform .1s;
+    }
+    .btn-primary:hover { background: #1e2d6e; }
+    .btn-primary:active { transform: scale(.97); }
+
+    /* ──────────── TOOLBAR ──────────── */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+      max-width: 300px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 9px 12px 9px 36px;
+      border: 1px solid #dde2ee;
+      border-radius: 8px;
+      font-size: 13.5px;
+      background: #fff;
+      color: #1a2035;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-box input:focus { border-color: #2c3e8c; }
+    .search-box svg {
+      position: absolute;
+      left: 10px; top: 50%;
+      transform: translateY(-50%);
+      color: #8a94a6;
+    }
+
+    /* ──────────── CARD / TABLE ──────────── */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e9f2;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead tr {
+      background: #f8f9fc;
+      border-bottom: 1px solid #e5e9f2;
+    }
+    th {
+      text-align: left;
+      padding: 13px 16px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #5a6a85;
+      white-space: nowrap;
+      user-select: none;
+    }
+    th.sortable { cursor: pointer; }
+    th.sortable:hover { color: #2c3e8c; }
+    td {
+      padding: 13px 16px;
+      font-size: 13.5px;
+      border-bottom: 1px solid #f0f2f8;
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #fafbff; }
+
+    .td-name { color: #2c3e8c; font-weight: 500; max-width: 200px; }
+    .td-desc { color: #5a6a85; max-width: 260px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .td-manager { color: #5a6a85; }
+    .td-date { color: #8a94a6; font-size: 12.5px; }
+
+    /* Actions */
+    .actions { display: flex; gap: 6px; }
+    .btn-icon {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 6px;
+      transition: background .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-icon.edit { color: #2c3e8c; }
+    .btn-icon.edit:hover { background: #eef2ff; }
+    .btn-icon.del { color: #e53e3e; }
+    .btn-icon.del:hover { background: #fff5f5; }
+
+    /* ──────────── EMPTY STATE ──────────── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8a94a6;
+    }
+    .empty-state svg { margin-bottom: 12px; opacity: .4; }
+    .empty-state p { font-size: 14px; }
+
+    /* ──────────── PAGINATION ──────────── */
+    .pagination-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-top: 1px solid #e5e9f2;
+      font-size: 13px;
+      color: #5a6a85;
+    }
+    .pagination-btns { display: flex; gap: 4px; }
+    .pg-btn {
+      border: 1px solid #dde2ee;
+      background: #fff;
+      border-radius: 6px;
+      width: 32px; height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #5a6a85;
+      transition: all .15s;
+    }
+    .pg-btn:hover { background: #eef2ff; border-color: #2c3e8c; color: #2c3e8c; }
+    .pg-btn.active { background: #2c3e8c; border-color: #2c3e8c; color: #fff; }
+    .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .page-size-select {
+      border: 1px solid #dde2ee;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 13px;
+      color: #5a6a85;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* ──────────── MODAL ──────────── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn .15s;
+    }
+    .overlay.show { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      width: 460px;
+      max-width: 94vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+      animation: slideUp .2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #e5e9f2;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; color: #1a2035; }
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #8a94a6;
+      font-size: 22px;
+      line-height: 1;
+      padding: 2px;
+      transition: color .15s;
+    }
+    .modal-close:hover { color: #1a2035; }
+    .modal-body { padding: 20px 24px; }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #5a6a85;
+      margin-bottom: 6px;
+    }
+    label .req { color: #e53e3e; }
+    input[type=text], textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #dde2ee;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-family: inherit;
+      color: #1a2035;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type=text]:focus,
+    textarea:focus,
+    select:focus { border-color: #2c3e8c; }
+    textarea { resize: vertical; min-height: 80px; }
+    .error-msg {
+      color: #e53e3e;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 24px 20px;
+      border-top: 1px solid #e5e9f2;
+    }
+    .btn-ghost {
+      background: none;
+      border: 1px solid #dde2ee;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #5a6a85;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-ghost:hover { border-color: #2c3e8c; color: #2c3e8c; }
+
+    /* ──────────── CONFIRM MODAL ──────────── */
+    .confirm-modal { width: 380px; }
+    .confirm-icon {
+      text-align: center;
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    .confirm-text {
+      text-align: center;
+      font-size: 14px;
+      color: #5a6a85;
+      line-height: 1.6;
+    }
+    .confirm-name { font-weight: 700; color: #1a2035; }
+
+    /* ──────────── TOAST ──────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.14);
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 250px;
+      border-left: 4px solid #38a169;
+      animation: toastIn .25s ease;
+    }
+    .toast.error { border-left-color: #e53e3e; }
+    .toast.warning { border-left-color: #dd6b20; }
+    @keyframes toastIn {
+      from { transform: translateX(60px); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ──────────── LOADING ──────────── */
+    .loading-row td {
+      text-align: center;
+      padding: 40px;
+      color: #8a94a6;
+    }
+    .spinner {
+      display: inline-block;
+      width: 24px; height: 24px;
+      border: 3px solid #e5e9f2;
+      border-top-color: #2c3e8c;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ──────────── BADGE ──────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge.active { background: #e6f4ea; color: #276749; }
+    .badge.inactive { background: #fff3e0; color: #b45309; }
+
+    /* ──────────── LOGIN GATE ──────────── */
+    #login-gate {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #f4f6fb;
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    #login-gate.show { display: flex; }
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.1);
+    }
+    .login-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2c3e8c;
+      margin-bottom: 6px;
+    }
+    .login-sub {
+      color: #8a94a6;
+      font-size: 13.5px;
+      margin-bottom: 28px;
+    }
+    .login-card .form-group { margin-bottom: 18px; }
+    .login-card .btn-primary {
+      width: 100%;
+      justify-content: center;
+      padding: 12px;
+      font-size: 15px;
+    }
+    #login-error {
+      color: #e53e3e;
+      font-size: 13px;
+      margin-top: 10px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+
+
+<!-- TOPBAR -->
+<header class="topbar" id="topbar-placeholder"></header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="navbar-placeholder"></aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">Danh sách phòng ban</div>
+      <button class="btn-primary" onclick="openCreateModal()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tạo phòng ban
+      </button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Tìm tên phòng ban..." oninput="onSearch()" />
+      </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:52px">STT</th>
+            <th class="sortable" onclick="sortBy('name')">Tên phòng ban ↕</th>
+            <th>Mô tả</th>
+            <th>Trưởng phòng</th>
+            <th>Ngày cập nhật</th>
+            <th style="width:90px">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="dept-tbody">
+          <tr class="loading-row"><td colspan="6"><span class="spinner"></span> Đang tải...</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-row">
+        <span id="pagination-info">–</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="pagination-btns" id="pagination-btns"></div>
+          <select class="page-size-select" id="page-size-select" onchange="onPageSizeChange()">
+            <option value="5">5 / trang</option>
+            <option value="10" selected>10 / trang</option>
+            <option value="20">20 / trang</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL: Create / Edit
+════════════════════════════════════════ -->
+<div class="overlay" id="form-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Tạo phòng ban</div>
+      <button class="modal-close" onclick="closeFormModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="dept-id" />
+      <div class="form-group">
+        <label>Tên phòng ban <span class="req">*</span></label>
+        <input type="text" id="f-name" placeholder="VD: Phòng Kế toán" maxlength="150" />
+        <div class="error-msg" id="e-name">Vui lòng nhập tên phòng ban</div>
+      </div>
+      <div class="form-group">
+        <label>Mô tả</label>
+        <textarea id="f-desc" placeholder="Mô tả ngắn về phòng ban..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Trưởng phòng</label>
+        <select id="f-manager" style="width:100%;padding:9px 12px;border:1px solid #dde2ee;border-radius:8px;font-size:13.5px;">
+          <option value="">— Không gán —</option>
+        </select>
+        <p style="font-size:11px;color:#8a94a6;margin-top:6px;">Sửa phòng ban: chỉ chọn nhân viên đã thuộc phòng này (theo hồ sơ nhân viên).</p>
+        <div class="error-msg" id="e-manager"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeFormModal()">Hủy</button>
+      <button class="btn-primary" onclick="submitForm()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Lưu
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     MODAL: Confirm Delete
+════════════════════════════════════════ -->
+<div class="overlay" id="confirm-overlay" onclick="closeModal(event)">
+  <div class="modal confirm-modal">
+    <div class="modal-header">
+      <div class="modal-title">Xác nhận xóa</div>
+      <button class="modal-close" onclick="closeConfirm()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-text">
+        Bạn có chắc muốn xóa phòng ban<br/>
+        <span class="confirm-name" id="confirm-dept-name"></span>?<br/>
+        <br/>Hành động này không thể hoàn tác.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeConfirm()">Hủy</button>
+      <button class="btn-primary" style="background:#e53e3e;" onclick="confirmDelete()">Xóa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════ -->
+<script>
+  const API_BASE = '/api';
+  let token = localStorage.getItem('hrm_access_token') || '';
+  let currentUser = JSON.parse(localStorage.getItem('hrm_user') || 'null');
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let state = {
+    page: 0,
+    size: 10,
+    keyword: '',
+    sortField: 'name',
+    sortDir: 'asc',
+    totalPages: 0,
+    totalElements: 0,
+  };
+  let deletingId = null;
+  let searchTimer = null;
+
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  function init() {
+    if (!token) { window.location.href = '/login'; return; }
+    renderUser();
+    loadDepartments();
+  }
+
+  function renderUser() { /* handled by frags.js */ }
+
+  function logout() { HRMFrags.logout(); }
+
+  // ── API helpers ──────────────────────────────────────────────────────────
+  async function apiFetch(path, options = {}) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+      },
+    });
+    if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+    return res;
+  }
+
+  // ── Load Departments ─────────────────────────────────────────────────────
+  async function loadDepartments() {
+    const tbody = document.getElementById('dept-tbody');
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> Đang tải...</td></tr>';
+
+    const params = new URLSearchParams({
+      page: state.page,
+      size: state.size,
+      sort: `${state.sortField},${state.sortDir}`,
+    });
+    if (state.keyword) params.set('keyword', state.keyword);
+
+    try {
+      const res = await apiFetch(`/departments?${params}`);
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+
+      // Spring Page response
+      const content = data.content ?? [];
+      state.totalPages = data.totalPages ?? 0;
+      state.totalElements = data.totalElements ?? 0;
+
+      renderTable(content);
+      renderPagination();
+    } catch (err) {
+      tbody.innerHTML = `<tr class="loading-row"><td colspan="6">❌ Lỗi tải dữ liệu</td></tr>`;
+    }
+  }
+
+  // ── Render Table ─────────────────────────────────────────────────────────
+  function renderTable(list) {
+    const tbody = document.getElementById('dept-tbody');
+    if (!list.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="6">
+          <div class="empty-state">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24">
+              <path d="M3 21V7l9-4 9 4v14"/><path d="M9 21v-6h6v6"/>
+            </svg>
+            <p>Chưa có phòng ban nào</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map((dept, idx) => {
+      const stt = state.page * state.size + idx + 1;
+      const updatedAt = dept.updatedAt
+        ? new Date(dept.updatedAt).toLocaleDateString('vi-VN')
+        : (dept.createdAt ? new Date(dept.createdAt).toLocaleDateString('vi-VN') : '–');
+      const manager = dept.managerName || '–';
+      const desc = dept.description || '–';
+      return `
+        <tr>
+          <td><span style="color:#8a94a6;font-size:13px;">${stt}</span></td>
+          <td class="td-name">${escHtml(dept.name)}</td>
+          <td class="td-desc" title="${escHtml(dept.description || '')}">${escHtml(desc)}</td>
+          <td class="td-manager">${escHtml(manager)}</td>
+          <td class="td-date">${updatedAt}</td>
+          <td>
+            <div class="actions">
+              <button class="btn-icon edit" title="Chỉnh sửa" onclick="openEditModal(${dept.id})">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-icon del" title="Xóa" onclick="openConfirmDelete(${dept.id}, '${escHtml(dept.name)}')">
+                <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                  <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── Pagination ───────────────────────────────────────────────────────────
+  function renderPagination() {
+    const start = state.page * state.size + 1;
+    const end   = Math.min((state.page + 1) * state.size, state.totalElements);
+    document.getElementById('pagination-info').textContent =
+      state.totalElements === 0 ? 'Không có dữ liệu'
+        : `Hiển thị ${start}–${end} / ${state.totalElements} phòng ban`;
+
+    const btns = document.getElementById('pagination-btns');
+    let html = `<button class="pg-btn" onclick="goPage(${state.page - 1})" ${state.page === 0 ? 'disabled' : ''}>‹</button>`;
+    for (let i = 0; i < state.totalPages; i++) {
+      html += `<button class="pg-btn ${i === state.page ? 'active' : ''}" onclick="goPage(${i})">${i + 1}</button>`;
+    }
+    html += `<button class="pg-btn" onclick="goPage(${state.page + 1})" ${state.page >= state.totalPages - 1 ? 'disabled' : ''}>›</button>`;
+    btns.innerHTML = html;
+  }
+
+  function goPage(p) {
+    if (p < 0 || p >= state.totalPages) return;
+    state.page = p;
+    loadDepartments();
+  }
+
+  function onPageSizeChange() {
+    state.size = parseInt(document.getElementById('page-size-select').value);
+    state.page = 0;
+    loadDepartments();
+  }
+
+  // ── Search ───────────────────────────────────────────────────────────────
+  function onSearch() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      state.keyword = document.getElementById('search-input').value.trim();
+      state.page = 0;
+      loadDepartments();
+    }, 350);
+  }
+
+  // ── Sort ─────────────────────────────────────────────────────────────────
+  function sortBy(field) {
+    if (state.sortField === field) {
+      state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.sortField = field;
+      state.sortDir = 'asc';
+    }
+    state.page = 0;
+    loadDepartments();
+  }
+
+  // ── Modal helpers ─────────────────────────────────────────────────────────
+  async function loadManagerDropdownForCreate() {
+    const sel = document.getElementById('f-manager');
+    sel.innerHTML = '<option value="">— Không gán —</option>';
+    try {
+      const res = await apiFetch('/employees?status=ACTIVE&page=0&size=300&sort=fullName,asc');
+      if (!res.ok) return;
+      const data = await res.json();
+      (data.content || []).forEach(e => {
+        const o = document.createElement('option');
+        o.value = e.id;
+        o.textContent = e.fullName + (e.employeeCode ? ' (' + e.employeeCode + ')' : '');
+        sel.appendChild(o);
+      });
+    } catch (_) {}
+  }
+
+  async function loadManagerDropdownForEdit(deptId) {
+    const sel = document.getElementById('f-manager');
+    sel.innerHTML = '<option value="">— Không gán —</option>';
+    try {
+      const res = await apiFetch(`/departments/${deptId}/employees?page=0&size=200&sort=fullName,asc`);
+      if (!res.ok) return;
+      const data = await res.json();
+      (data.content || []).forEach(e => {
+        const o = document.createElement('option');
+        o.value = e.id;
+        o.textContent = e.fullName + (e.employeeCode ? ' (' + e.employeeCode + ')' : '');
+        sel.appendChild(o);
+      });
+    } catch (_) {}
+  }
+
+  async function openCreateModal() {
+    document.getElementById('modal-title').textContent = 'Tạo phòng ban';
+    document.getElementById('dept-id').value = '';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-desc').value = '';
+    clearErrors();
+    await loadManagerDropdownForCreate();
+    document.getElementById('f-manager').value = '';
+    document.getElementById('form-overlay').classList.add('show');
+  }
+
+  async function openEditModal(id) {
+    try {
+      const res = await apiFetch(`/departments/${id}`);
+      if (!res.ok) throw new Error();
+      const dept = await res.json();
+      document.getElementById('modal-title').textContent = 'Chỉnh sửa phòng ban';
+      document.getElementById('dept-id').value = dept.id;
+      document.getElementById('f-name').value = dept.name;
+      document.getElementById('f-desc').value = dept.description || '';
+      clearErrors();
+      await loadManagerDropdownForEdit(id);
+      document.getElementById('f-manager').value = dept.managerId != null ? String(dept.managerId) : '';
+      document.getElementById('form-overlay').classList.add('show');
+    } catch {
+      showToast('Không thể tải thông tin phòng ban', 'error');
+    }
+  }
+
+  function closeFormModal() {
+    document.getElementById('form-overlay').classList.remove('show');
+  }
+
+  function closeModal(e) {
+    if (e.target === e.currentTarget) {
+      document.getElementById('form-overlay').classList.remove('show');
+      document.getElementById('confirm-overlay').classList.remove('show');
+    }
+  }
+
+  function clearErrors() {
+    document.querySelectorAll('.error-msg').forEach(el => {
+      el.classList.remove('show');
+      el.textContent = '';
+    });
+  }
+
+  // ── Submit Form (Create / Update) ─────────────────────────────────────────
+  async function submitForm() {
+    clearErrors();
+    const id   = document.getElementById('dept-id').value;
+    const name = document.getElementById('f-name').value.trim();
+    const desc = document.getElementById('f-desc').value.trim();
+
+    if (!name) {
+      document.getElementById('e-name').classList.add('show');
+      return;
+    }
+
+    const mgr = document.getElementById('f-manager').value;
+    const body = JSON.stringify({
+      name,
+      description: desc || null,
+      managerId: mgr ? Number(mgr) : null
+    });
+    const isEdit = !!id;
+
+    try {
+      const res = await apiFetch(
+        isEdit ? `/departments/${id}` : '/departments',
+        { method: isEdit ? 'PUT' : 'POST', body }
+      );
+
+      if (res.status === 409) {
+        const err = await res.json();
+        document.getElementById('e-name').textContent = err.message || 'Tên đã tồn tại';
+        document.getElementById('e-name').classList.add('show');
+        return;
+      }
+      if (res.status === 400) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.message || 'Dữ liệu không hợp lệ';
+        document.getElementById('e-manager').textContent = msg;
+        document.getElementById('e-manager').classList.add('show');
+        return;
+      }
+      if (!res.ok) throw new Error(await res.text());
+
+      closeFormModal();
+      showToast(isEdit ? 'Cập nhật phòng ban thành công!' : 'Tạo phòng ban thành công!');
+      loadDepartments();
+    } catch (err) {
+      showToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+    }
+  }
+
+  // ── Delete ────────────────────────────────────────────────────────────────
+  function openConfirmDelete(id, name) {
+    deletingId = id;
+    document.getElementById('confirm-dept-name').textContent = `"${name}"`;
+    document.getElementById('confirm-overlay').classList.add('show');
+  }
+
+  function closeConfirm() {
+    deletingId = null;
+    document.getElementById('confirm-overlay').classList.remove('show');
+  }
+
+  async function confirmDelete() {
+    if (!deletingId) return;
+    try {
+      const res = await apiFetch(`/departments/${deletingId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      closeConfirm();
+      showToast('Xóa phòng ban thành công!');
+      if (state.page > 0 && (state.totalElements - 1) <= state.page * state.size) {
+        state.page--;
+      }
+      loadDepartments();
+    } catch {
+      showToast('Không thể xóa phòng ban này', 'error');
+    }
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = `toast${type !== 'success' ? ' ' + type : ''}`;
+    el.innerHTML = (type === 'success' ? '✅' : type === 'error' ? '❌' : '⚠️') + ` ${msg}`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── Util ──────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Init
+  init();
+</script>
+</body>
+</html>
