@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRM Login</title>
+    <style>
+        :root {
+            --bg1: #0f172a;
+            --bg2: #1e293b;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #dc2626;
+            --ok: #16a34a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: radial-gradient(1000px 600px at 10% 0%, var(--bg2), var(--bg1));
+            color: var(--text);
+            padding: 16px;
+        }
+        .wrap {
+            width: min(420px, 96vw);
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 20px 45px rgba(2, 6, 23, 0.35);
+            padding: 26px;
+        }
+        h1 {
+            margin: 0 0 6px;
+            font-size: 28px;
+        }
+        .subtitle {
+            margin: 0 0 20px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #374151;
+        }
+        .field { margin-bottom: 14px; }
+        input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+        }
+        button {
+            width: 100%;
+            border: 0;
+            border-radius: 10px;
+            padding: 11px 14px;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background .2s, transform .1s;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: translateY(1px); }
+        .status {
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--muted);
+            min-height: 20px;
+        }
+        .status.ok { color: var(--ok); }
+        .status.bad { color: var(--danger); }
+        .result {
+            margin-top: 12px;
+            white-space: pre-wrap;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>HRM Login</h1>
+    <p class="subtitle">Welcome back. Please sign in to continue.</p>
+
+    <div class="field">
+        <label for="username">Username</label>
+        <input id="username" value="admin" autocomplete="username">
+    </div>
+    <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" value="123456" autocomplete="current-password">
+    </div>
+
+    <button id="btnLogin">Login</button>
+
+    <div id="status" class="status">Ready.</div>
+    <div id="result" class="result">Access token will be saved in localStorage key: hrm_access_token</div>
+</div>
+
+<script>
+    const ACCESS_TOKEN_KEY = "hrm_access_token";
+    const username = document.getElementById("username");
+    const password = document.getElementById("password");
+    const btnLogin = document.getElementById("btnLogin");
+    const statusEl = document.getElementById("status");
+    const resultEl = document.getElementById("result");
+
+    async function parseJsonSafe(response) {
+        const raw = await response.text();
+        if (!raw) return {};
+        try { return JSON.parse(raw); } catch (e) { return { raw }; }
+    }
+
+    function setStatus(text, ok) {
+        statusEl.textContent = text;
+        statusEl.className = "status " + (ok ? "ok" : "bad");
+    }
+
+    btnLogin.addEventListener("click", async () => {
+        setStatus("Logging in...", true);
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    username: username.value.trim(),
+                    password: password.value
+                })
+            });
+            const data = await parseJsonSafe(res);
+            if (!res.ok) {
+                localStorage.removeItem(ACCESS_TOKEN_KEY);
+                setStatus("Login failed (" + res.status + ")", false);
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                return;
+            }
+
+            const token = data.accessToken || data.access_token || "";
+            if (!token) {
+                localStorage.removeItem(ACCESS_TOKEN_KEY);
+                setStatus("Login failed: token missing", false);
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                return;
+            }
+
+            const roleNorm = String(data.role || "").trim().toUpperCase();
+            localStorage.setItem(ACCESS_TOKEN_KEY, token);
+            localStorage.setItem("hrm_user", JSON.stringify({
+                username: data.username,
+                role: roleNorm || data.role,
+                employeeId: data.employeeId != null ? data.employeeId : data.employee_id
+            }));
+            localStorage.setItem("hrm_refresh_token", data.refreshToken || data.refresh_token || "");
+
+            setStatus("Đăng nhập thành công! Đang chuyển trang...", true);
+
+            const redirectTo = "/overview";
+            setTimeout(() => { window.location.replace(redirectTo); }, 150);
+        } catch (err) {
+            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            setStatus("Request error", false);
+            resultEl.textContent = String(err);
+        }
+    });
+</script>
+</body>
+</html>
