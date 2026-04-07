@@ -18,10 +18,6 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>, J
 
     boolean existsByEmployeeIdAndAttendanceDate(Long employeeId, LocalDate date);
 
-    /** Bản ghi chấm công của nhân viên trong khoảng ngày (hai đầu inclusive). */
-    List<Attendance> findByEmployeeIdAndAttendanceDateBetween(
-            Long employeeId, LocalDate startInclusive, LocalDate endInclusive);
-
     /** Số bản ghi chấm công theo trạng thái trong khoảng ngày. */
     @Query("SELECT a.status, COUNT(a) FROM Attendance a WHERE a.attendanceDate BETWEEN :from AND :to GROUP BY a.status")
     List<Object[]> countByStatusInRange(@Param("from") LocalDate from, @Param("to") LocalDate to);

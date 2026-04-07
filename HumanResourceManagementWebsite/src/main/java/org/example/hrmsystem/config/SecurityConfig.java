@@ -4,6 +4,7 @@ import org.example.hrmsystem.security.AppUserDetailsService;
 import org.example.hrmsystem.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -33,6 +34,16 @@ public class SecurityConfig {
         this.appUserDetailsService = appUserDetailsService;
     }
 
+    /**
+     * Không chạy JWT / filter chain cho HTML tĩnh và fragment — tránh 403 khi forward
+     * từ /overview → /overview.html hoặc khi matcher permitAll không khớp đúng.
+     */
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+                .requestMatchers("/*.html", "/frags.js", "/fragments/**", "/uploads/**");
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -41,7 +52,8 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/error", "/error/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/.well-known/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/login", "/login.html", "/favicon.ico").permitAll()
@@ -49,15 +61,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/attendance.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/leave.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/worktime.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/departments.html").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/employees.html").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/*.html").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/overview").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/performance").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/dashboard").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/frags.js").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/fragments/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers("/api/attendance/**").authenticated()
                         .requestMatchers("/api/leave/**").authenticated()
                         .requestMatchers("/api/departments/**").authenticated()
                         .requestMatchers("/api/employees/**").authenticated()
+                        .requestMatchers("/api/dashboard/**").authenticated()
+                        .requestMatchers("/api/payroll/**").authenticated()
+                        .requestMatchers("/api/performance-reviews/**").authenticated()
+                        .requestMatchers("/api/notifications/**").authenticated()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,0 +1,18 @@
+<div class="topbar-logo">
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2c3e8c"/><path d="M8 20V10l6-4 6 4v10H8z" fill="#fff" opacity=".9"/><rect x="11.5" y="14" width="5" height="6" rx="1" fill="#2c3e8c"/></svg>
+  HRM<span class="dot">.</span>System
+</div>
+<nav class="topbar-nav">
+  <a href="/overview" data-nav="overview">Trang chủ</a>
+  <a href="/employees.html" data-nav="employees" data-roles="ADMIN,HR,MANAGER">Nhân viên</a>
+  <a href="/departments.html" data-nav="departments" data-roles="ADMIN,HR">Phòng ban</a>
+  <a href="/payroll.html" data-nav="payroll" data-roles="ADMIN,HR">Bảng lương</a>
+  <a href="/performance.html" data-nav="performance" data-roles="ADMIN,HR,MANAGER">Đánh giá</a>
+  <a href="/worktime.html#attendance" data-nav="attendance">Chấm công</a>
+  <a href="/worktime.html#leave" data-nav="leave">Nghỉ phép</a>
+</nav>
+<div class="topbar-user">
+  <span id="topbar-username">–</span>
+  <div class="avatar-circle" id="topbar-avatar">U</div>
+  <button class="btn-ghost" onclick="HRMFrags.logout()">Đăng xuất</button>
+</div>

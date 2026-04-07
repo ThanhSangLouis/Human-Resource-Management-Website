@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tổng quan – HRM System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="/frags.js?v=3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f0f2f7; color: #1a2035; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── TOPBAR ── */
+    .topbar { background:#fff; border-bottom:1px solid #e5e9f2; padding:10px 32px; min-height:60px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 20px; position:sticky; top:0; z-index:100; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .topbar-logo { font-size:18px; font-weight:700; color:#2c3e8c; display:flex; align-items:center; gap:8px; }
+    .topbar-logo span.dot { color:#f5a623; }
+    .topbar-nav { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; max-width:100%; }
+    .topbar-nav a { text-decoration:none; color:#5a6a85; font-size:14px; font-weight:500; padding:4px 0; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
+    .topbar-nav a.active, .topbar-nav a:hover { color:#2c3e8c; border-bottom-color:#2c3e8c; }
+    .topbar-user { display:flex; align-items:center; gap:12px; font-size:14px; color:#5a6a85; flex-shrink:0; margin-left:auto; }
+    .avatar-circle { width:36px; height:36px; border-radius:50%; background:#2c3e8c; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
+    .btn-ghost { background:none; border:1px solid #dde2ee; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:500; color:#5a6a85; cursor:pointer; transition:all .15s; }
+    .btn-ghost:hover { border-color:#2c3e8c; color:#2c3e8c; }
+
+    /* ── LAYOUT ── */
+    .layout { display:flex; flex:1; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width:220px; background:#fff; border-right:1px solid #e5e9f2; padding:24px 0; flex-shrink:0; }
+    .sidebar-section-title { font-size:11px; font-weight:700; color:#8a94a6; letter-spacing:.8px; text-transform:uppercase; padding:0 20px 8px; margin-top:16px; }
+    .sidebar-item { display:flex; align-items:center; gap:10px; padding:9px 20px; font-size:13.5px; color:#5a6a85; cursor:pointer; border-left:3px solid transparent; transition:all .15s; text-decoration:none; }
+    .sidebar-item:hover { background:#f0f4ff; color:#2c3e8c; }
+    .sidebar-item.active { background:#eef2ff; color:#2c3e8c; font-weight:600; border-left-color:#2c3e8c; }
+    .sidebar-item svg { flex-shrink:0; }
+
+    /* ── MAIN ── */
+    .main { flex:1; padding:28px 32px; overflow-y:auto; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:28px; }
+    .page-eyebrow { font-size:11px; font-weight:700; color:#8a94a6; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+    .page-heading { font-size:24px; font-weight:700; color:#1a2035; line-height:1.2; }
+    .page-sub { font-size:13px; color:#8a94a6; margin-top:5px; }
+
+    .controls { display:flex; align-items:center; gap:10px; }
+    .controls label { font-size:13px; color:#5a6a85; font-weight:500; white-space:nowrap; }
+    .controls input[type=month] { border:1px solid #dde2ee; border-radius:8px; padding:8px 12px; font-size:13px; font-family:inherit; color:#1a2035; outline:none; background:#fff; }
+    .controls input[type=month]:focus { border-color:#2c3e8c; }
+    .btn-refresh { background:#2c3e8c; color:#fff; border:none; border-radius:8px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:background .2s; white-space:nowrap; }
+    .btn-refresh:hover { background:#1e2d6e; }
+
+    /* ── SECTION LABEL ── */
+    .section-label { font-size:11px; font-weight:700; color:#8a94a6; letter-spacing:.9px; text-transform:uppercase; margin-bottom:12px; }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+    .kpi-card {
+      background:#fff; border-radius:12px; border:1px solid #e5e9f2;
+      padding:0; overflow:hidden;
+      box-shadow:0 1px 4px rgba(0,0,0,.04);
+      display:flex; flex-direction:column;
+    }
+    .kpi-accent { height:4px; }
+    .kpi-card.blue  .kpi-accent { background:#2c3e8c; }
+    .kpi-card.green .kpi-accent { background:#22863a; }
+    .kpi-card.amber .kpi-accent { background:#d97706; }
+    .kpi-card.red   .kpi-accent { background:#e53e3e; }
+    .kpi-body { padding:18px 20px 20px; }
+    .kpi-label { font-size:11.5px; font-weight:600; color:#8a94a6; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+    .kpi-value { font-size:36px; font-weight:700; line-height:1; margin-bottom:6px; }
+    .kpi-card.blue  .kpi-value { color:#2c3e8c; }
+    .kpi-card.green .kpi-value { color:#22863a; }
+    .kpi-card.amber .kpi-value { color:#d97706; }
+    .kpi-card.red   .kpi-value { color:#e53e3e; }
+    .kpi-sub { font-size:12px; color:#8a94a6; }
+
+    /* ── MIDDLE ROW ── */
+    .mid-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+
+    /* ── PANEL CARD ── */
+    .panel {
+      background:#fff; border-radius:12px; border:1px solid #e5e9f2;
+      box-shadow:0 1px 4px rgba(0,0,0,.04); overflow:hidden;
+    }
+    .panel-head {
+      padding:16px 20px 14px;
+      border-bottom:1px solid #f0f2f8;
+      display:flex; align-items:baseline; justify-content:space-between;
+    }
+    .panel-title { font-size:13.5px; font-weight:600; color:#1a2035; }
+    .panel-meta  { font-size:12px; color:#8a94a6; }
+    .panel-body  { padding:18px 20px; }
+
+    /* ── CHART ── */
+    .chart-wrap { position:relative; height:220px; }
+
+    /* ── ATTENDANCE STAT PILLS ── */
+    .att-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .att-pill {
+      flex:1; min-width:80px;
+      background:#f8f9fc; border-radius:10px; padding:14px 10px;
+      text-align:center; border:1px solid #edf0f7;
+    }
+    .att-pill .ap-val { font-size:24px; font-weight:700; margin-bottom:3px; }
+    .att-pill .ap-lbl { font-size:11px; color:#8a94a6; font-weight:500; }
+    .att-pill.present .ap-val { color:#22863a; }
+    .att-pill.late    .ap-val { color:#d97706; }
+    .att-pill.half    .ap-val { color:#1d4ed8; }
+    .att-pill.leave   .ap-val { color:#7c3aed; }
+    .att-pill.absent  .ap-val { color:#e53e3e; }
+
+    /* attendance rate bar */
+    .rate-bar-wrap { margin-top:16px; }
+    .rate-bar-label { display:flex; justify-content:space-between; font-size:12px; color:#8a94a6; margin-bottom:5px; }
+    .rate-bar-track { height:8px; background:#f0f2f8; border-radius:4px; overflow:hidden; }
+    .rate-bar-fill  { height:100%; border-radius:4px; background:linear-gradient(90deg,#2c3e8c,#4f8ef7); transition:width .6s ease; }
+
+    /* ── DEPT TABLE ── */
+    .dept-table { width:100%; border-collapse:collapse; }
+    .dept-table th { text-align:left; padding:9px 12px; font-size:11.5px; font-weight:600; color:#8a94a6; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid #f0f2f8; }
+    .dept-table td { padding:11px 12px; font-size:13.5px; border-bottom:1px solid #f4f5fa; }
+    .dept-table tbody tr:last-child td { border-bottom:none; }
+    .dept-table tbody tr:hover td { background:#fafbff; }
+    .dept-bar-wrap { display:flex; align-items:center; gap:8px; }
+    .dept-bar { height:6px; border-radius:3px; background:linear-gradient(90deg,#2c3e8c 0%,#5b8af4 100%); flex-shrink:0; }
+    .dept-pct { font-size:11.5px; color:#8a94a6; white-space:nowrap; }
+    .dept-count { font-weight:600; color:#1a2035; }
+
+    /* ── BOTTOM ROW ── */
+    .bottom-row { margin-top:14px; }
+
+    /* ── LOADING / ERROR ── */
+    .loading { display:flex; align-items:center; justify-content:center; padding:80px 0; color:#8a94a6; font-size:14px; gap:10px; }
+    .spinner { width:20px; height:20px; border:3px solid #e5e9f2; border-top-color:#2c3e8c; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .error-msg { background:#fff5f5; border:1px solid #fecaca; border-radius:8px; padding:12px 16px; color:#dc2626; font-size:13px; margin-bottom:16px; display:none; }
+
+    .generated-at { font-size:11.5px; color:#b0b8cc; margin-top:12px; text-align:right; }
+  </style>
+</head>
+<body>
+<header class="topbar" id="topbar-placeholder"></header>
+
+<div class="layout">
+  <aside class="sidebar" id="navbar-placeholder"></aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-eyebrow">Tổng quan</div>
+        <div class="page-heading">Báo cáo vận hành</div>
+        <div class="page-sub" id="pageSubtitle">Đang tải dữ liệu…</div>
+      </div>
+      <div class="controls">
+        <label for="monthPicker">Tháng:</label>
+        <input type="month" id="monthPicker" />
+        <button class="btn-refresh" onclick="loadDashboard()">Làm mới</button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div id="dashContent">
+      <div class="loading"><div class="spinner"></div> Đang tải dữ liệu…</div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API = '';
+let currentRole = '';
+let chartStatus = null;
+let chartAttendance = null;
+
+function getToken()      { return HRMFrags.getToken(); }
+function getUser()       { return HRMFrags.getUser(); }
+function redirectLogin() { HRMFrags.redirectLogin(); }
+
+async function authFetch(url, opts = {}) {
+  const token = getToken();
+  if (!token) { redirectLogin(); return null; }
+  const resp = await fetch(API + url, {
+    ...opts,
+    headers: { ...(opts.headers || {}), 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+  });
+  if (resp.status === 401) { redirectLogin(); return null; }
+  return resp;
+}
+
+async function loadDashboard() {
+  const month = document.getElementById('monthPicker').value;
+  const url = '/api/dashboard' + (month ? '?month=' + month : '');
+
+  document.getElementById('dashContent').innerHTML =
+    '<div class="loading"><div class="spinner"></div> Đang tải dữ liệu…</div>';
+
+  const resp = await authFetch(url);
+  if (!resp) return;
+
+  if (!resp.ok) {
+    showError('Không thể tải dữ liệu. (' + resp.status + ')');
+    document.getElementById('dashContent').innerHTML = '';
+    return;
+  }
+
+  const data = await resp.json();
+  hideError();
+  renderDashboard(data);
+}
+
+function renderDashboard(d) {
+  const active   = d.byStatus?.ACTIVE   || 0;
+  const inactive = d.byStatus?.INACTIVE || 0;
+  const resigned = d.byStatus?.RESIGNED || 0;
+  const att = d.attendanceMonth || {};
+  const rate = att.attendanceRate || 0;
+
+  document.getElementById('pageSubtitle').textContent =
+    'Tháng ' + (att.month || '—') + '   ·   Cập nhật ' + (d.generatedAt || '');
+
+  if (chartStatus)     { chartStatus.destroy();     chartStatus = null; }
+  if (chartAttendance) { chartAttendance.destroy(); chartAttendance = null; }
+
+  const activePct = d.totalEmployees > 0 ? Math.round(active * 100 / d.totalEmployees) : 0;
+
+  document.getElementById('dashContent').innerHTML = `
+    <!-- KPI row -->
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-accent"></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Tổng nhân viên</div>
+          <div class="kpi-value">${d.totalEmployees}</div>
+          <div class="kpi-sub">${d.totalDepartments} phòng ban</div>
+        </div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-accent"></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Đang làm việc</div>
+          <div class="kpi-value">${active}</div>
+          <div class="kpi-sub">${activePct}% tổng nhân sự</div>
+        </div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-accent"></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Tạm nghỉ</div>
+          <div class="kpi-value">${inactive}</div>
+          <div class="kpi-sub">Trạng thái INACTIVE</div>
+        </div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-accent"></div>
+        <div class="kpi-body">
+          <div class="kpi-label">Đã nghỉ việc</div>
+          <div class="kpi-value">${resigned}</div>
+          <div class="kpi-sub">Trạng thái RESIGNED</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mid row: 2 charts -->
+    <div class="mid-row">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Phân bổ nhân viên</span>
+          <span class="panel-meta">Theo trạng thái</span>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Chấm công</span>
+          <span class="panel-meta">Tháng ${att.month || '—'}</span>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrap"><canvas id="chartAttendance"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance detail -->
+    <div class="panel bottom-row" style="margin-bottom:14px;">
+      <div class="panel-head">
+        <span class="panel-title">Chi tiết chấm công – Tháng ${att.month || '—'}</span>
+        <span class="panel-meta">${att.totalRecords || 0} bản ghi · Tỷ lệ có mặt ${rate}%</span>
+      </div>
+      <div class="panel-body">
+        <div class="att-row">
+          <div class="att-pill present"><div class="ap-val">${att.byStatus?.PRESENT || 0}</div><div class="ap-lbl">Đúng giờ</div></div>
+          <div class="att-pill late">   <div class="ap-val">${att.byStatus?.LATE    || 0}</div><div class="ap-lbl">Đi muộn</div></div>
+          <div class="att-pill half">   <div class="ap-val">${att.byStatus?.HALF_DAY|| 0}</div><div class="ap-lbl">Nửa ngày</div></div>
+          <div class="att-pill leave">  <div class="ap-val">${att.byStatus?.ON_LEAVE|| 0}</div><div class="ap-lbl">Nghỉ phép</div></div>
+          <div class="att-pill absent"> <div class="ap-val">${att.byStatus?.ABSENT  || 0}</div><div class="ap-lbl">Vắng mặt</div></div>
+        </div>
+        <div class="rate-bar-wrap">
+          <div class="rate-bar-label"><span>Tỷ lệ có mặt</span><span>${rate}%</span></div>
+          <div class="rate-bar-track"><div class="rate-bar-fill" style="width:${rate}%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dept table -->
+    <div class="panel bottom-row">
+      <div class="panel-head">
+        <span class="panel-title">Nhân viên theo phòng ban</span>
+        <span class="panel-meta">${d.totalDepartments} phòng ban</span>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <table class="dept-table">
+          <thead><tr><th style="padding-left:20px">#</th><th>Phòng ban</th><th>Số nhân viên</th><th style="width:220px;padding-right:20px">Tỷ lệ</th></tr></thead>
+          <tbody id="deptTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="generated-at" id="genAt"></div>
+  `;
+
+  /* Dept table rows */
+  const tbody  = document.getElementById('deptTableBody');
+  const maxCnt = d.byDepartment?.length ? d.byDepartment[0].count : 1;
+  (d.byDepartment || []).forEach((row, i) => {
+    const pct  = Math.round(row.count * 100 / (d.totalEmployees || 1));
+    const barW = Math.round(row.count * 100 / maxCnt);
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td style="color:#b0b8cc;padding-left:20px">${i + 1}</td>
+        <td style="font-weight:500">${row.departmentName}</td>
+        <td><span class="dept-count">${row.count}</span></td>
+        <td style="padding-right:20px">
+          <div class="dept-bar-wrap">
+            <div class="dept-bar" style="width:${Math.max(barW, 4)}%"></div>
+            <span class="dept-pct">${pct}%</span>
+          </div>
+        </td>
+      </tr>`);
+  });
+  if (!d.byDepartment?.length) {
+    tbody.insertAdjacentHTML('beforeend',
+      '<tr><td colspan="4" style="text-align:center;color:#8a94a6;padding:24px 0">Chưa có dữ liệu phòng ban</td></tr>');
+  }
+
+  document.getElementById('genAt').textContent =
+    d.generatedAt ? 'Cập nhật lúc ' + d.generatedAt : '';
+
+  /* Charts */
+  if (typeof Chart === 'undefined') {
+    showError('Không tải được Chart.js. Vui lòng kiểm tra kết nối mạng.');
+    return;
+  }
+  try {
+    const font = { family: 'Inter', size: 12 };
+
+    chartStatus = new Chart(document.getElementById('chartStatus'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Đang làm', 'Tạm nghỉ', 'Đã nghỉ việc'],
+        datasets: [{
+          data: [active, inactive, resigned],
+          backgroundColor: ['#22863a', '#d97706', '#e53e3e'],
+          borderWidth: 3,
+          borderColor: '#fff',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font, padding: 16, usePointStyle: true, pointStyleWidth: 8 } }
+        },
+        cutout: '65%'
+      }
+    });
+
+    const attLabels = ['PRESENT','LATE','HALF_DAY','ON_LEAVE','ABSENT'];
+    const attColors = ['#22863a','#d97706','#1d4ed8','#7c3aed','#e53e3e'];
+    const attNames  = ['Đúng giờ','Đi muộn','Nửa ngày','Nghỉ phép','Vắng mặt'];
+
+    chartAttendance = new Chart(document.getElementById('chartAttendance'), {
+      type: 'bar',
+      data: {
+        labels: attNames,
+        datasets: [{
+          data: attLabels.map(k => att.byStatus?.[k] || 0),
+          backgroundColor: attColors.map(c => c + '26'),
+          borderColor: attColors,
+          borderWidth: 2,
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0, font, color: '#8a94a6' }, grid: { color: '#f0f2f8' }, border: { display: false } },
+          x: { ticks: { font, color: '#8a94a6' }, grid: { display: false }, border: { display: false } }
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    showError('Lỗi vẽ biểu đồ. Dữ liệu số bên trên vẫn chính xác.');
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+document.addEventListener('hrm:frags-ready', function (e) {
+  const user = e.detail.user;
+  const role = e.detail.role;
+
+  if (!user || !getToken()) { redirectLogin(); return; }
+
+  currentRole = role;
+
+  const now = new Date();
+  document.getElementById('monthPicker').value =
+    now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+  loadDashboard();
+});
+</script>
+</body>
+</html>
