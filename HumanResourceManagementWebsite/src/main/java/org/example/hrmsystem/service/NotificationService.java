@@ -45,7 +45,7 @@ public class NotificationService {
     private String mailFrom;
 
     /** Khi false: không gửi SMTP thật, đánh dấu SENT để demo UI (khớp application.properties). */
-    @Value("${app.mail.send-enabled:true}")
+    @Value("${app.mail.send-enabled:false}")
     private boolean mailSendEnabled;
 
     public NotificationService(

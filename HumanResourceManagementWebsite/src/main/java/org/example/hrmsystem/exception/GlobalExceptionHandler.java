@@ -1,6 +1,5 @@
 package org.example.hrmsystem.exception;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -45,12 +44,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("message", ex.getMessage() != null ? ex.getMessage() : "Forbidden"));
-    }
-
-    /** Race / spam duyệt đơn hoặc vi phạm unique — tránh 500 không rõ nguyên nhân. */
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, String>> handleDataIntegrity(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("message", "Dữ liệu xung đột (có thể do thao tác trùng). Vui lòng tải lại danh sách."));
     }
 }
