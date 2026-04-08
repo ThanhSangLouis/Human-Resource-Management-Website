@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đánh giá hiệu suất – HRM System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="/frags.js?v=4"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f4f6fb; color: #1a2035; min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar { background:#fff; border-bottom:1px solid #e5e9f2; padding:10px 32px; min-height:60px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 20px; position:sticky; top:0; z-index:100; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .topbar-logo { font-size:18px; font-weight:700; color:#2c3e8c; display:flex; align-items:center; gap:8px; }
+    .topbar-logo span.dot { color:#f5a623; }
+    .topbar-nav { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; max-width:100%; }
+    .topbar-nav a { text-decoration:none; color:#5a6a85; font-size:14px; font-weight:500; padding:4px 0; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
+    .topbar-nav a.active, .topbar-nav a:hover { color:#2c3e8c; border-bottom-color:#2c3e8c; }
+    .topbar-user { display:flex; align-items:center; gap:12px; font-size:14px; color:#5a6a85; flex-shrink:0; margin-left:auto; }
+    .avatar-circle { width:36px; height:36px; border-radius:50%; background:#2c3e8c; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
+    .btn-ghost { background:none; border:1px solid #dde2ee; border-radius:8px; padding:6px 14px; font-size:12px; font-weight:500; color:#5a6a85; cursor:pointer; }
+
+    .layout { display:flex; flex:1; }
+    .sidebar { width:220px; background:#fff; border-right:1px solid #e5e9f2; padding:24px 0; flex-shrink:0; }
+    .sidebar-section-title { font-size:11px; font-weight:700; color:#8a94a6; letter-spacing:.8px; text-transform:uppercase; padding:0 20px 8px; margin-top:16px; }
+    .sidebar-item { display:flex; align-items:center; gap:10px; padding:9px 20px; font-size:13.5px; color:#5a6a85; cursor:pointer; border-left:3px solid transparent; transition:all .15s; text-decoration:none; }
+    .sidebar-item:hover { background:#f0f4ff; color:#2c3e8c; }
+    .sidebar-item.active { background:#eef2ff; color:#2c3e8c; font-weight:600; border-left-color:#2c3e8c; }
+
+    .main { flex:1; padding:28px 32px; overflow-y:auto; }
+    .page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:16px; }
+    .page-title { font-size:14px; font-weight:600; color:#8a94a6; letter-spacing:.3px; text-transform:uppercase; }
+    .page-desc { font-size:13px; color:#8a94a6; margin-top:6px; max-width:560px; line-height:1.5; }
+
+    .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin-bottom:18px; }
+    .toolbar label { font-size:12px; font-weight:600; color:#5a6a85; display:block; margin-bottom:4px; }
+    .toolbar .field { display:flex; flex-direction:column; }
+    .toolbar input, .toolbar select {
+      border:1px solid #dde2ee; border-radius:8px; padding:9px 12px; font-size:13.5px; font-family:inherit; color:#1a2035; outline:none; background:#fff;
+    }
+    .toolbar input:focus, .toolbar select:focus { border-color:#2c3e8c; }
+    .toolbar input[type=number] { width:100px; }
+
+    .btn-primary { background:#2c3e8c; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:13.5px; font-weight:600; cursor:pointer; }
+    .btn-primary:hover { background:#1e2d6e; }
+    .btn-primary:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ghost-lg { background:none; border:1px solid #dde2ee; border-radius:8px; padding:9px 16px; font-size:13.5px; font-weight:500; color:#5a6a85; cursor:pointer; }
+    .btn-ghost-lg:hover { border-color:#2c3e8c; color:#2c3e8c; }
+    .btn-amber { background:#fff; border:1.5px solid #f59e0b; color:#b45309; border-radius:8px; padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer; margin-right:6px; }
+    .btn-amber:hover { background:#fffbeb; }
+    .btn-green { background:#fff; border:1.5px solid #22c55e; color:#15803d; border-radius:8px; padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer; margin-right:6px; }
+    .btn-green:hover { background:#f0fdf4; }
+
+    .card { background:#fff; border-radius:12px; border:1px solid #e5e9f2; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:880px; }
+    thead tr { background:#f8f9fc; border-bottom:1px solid #e5e9f2; }
+    th { text-align:left; padding:12px 14px; font-size:12px; font-weight:600; color:#5a6a85; white-space:nowrap; }
+    td { padding:11px 14px; font-size:13px; border-bottom:1px solid #f0f2f8; vertical-align:top; }
+    tbody tr:hover { background:#fafbff; }
+    .num { text-align:right; font-variant-numeric: tabular-nums; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; }
+    .badge.DRAFT { background:#e0e7ff; color:#3730a3; }
+    .badge.SUBMITTED { background:#fff8e6; color:#b45309; }
+    .badge.APPROVED { background:#e6f4ea; color:#276749; }
+    .cmt { max-width:220px; font-size:12px; color:#5a6a85; line-height:1.4; }
+
+    .pagination-row { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-top:1px solid #e5e9f2; font-size:13px; color:#5a6a85; flex-wrap:wrap; gap:10px; }
+    .pg-btn { border:1px solid #dde2ee; background:#fff; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:13px; }
+    .pg-btn:hover:not(:disabled) { background:#eef2ff; border-color:#2c3e8c; color:#2c3e8c; }
+    .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+    .empty-state { text-align:center; padding:48px 20px; color:#8a94a6; }
+    .loading-row td { text-align:center; padding:36px; color:#8a94a6; }
+    .spinner { display:inline-block; width:22px; height:22px; border:3px solid #e5e9f2; border-top-color:#2c3e8c; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:8px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    #toast-container { position:fixed; bottom:24px; right:24px; z-index:400; display:flex; flex-direction:column; gap:8px; }
+    .toast { background:#fff; border-radius:10px; padding:14px 18px; box-shadow:0 6px 24px rgba(0,0,0,.14); font-size:13.5px; border-left:4px solid #38a169; }
+    .toast.error { border-left-color:#e53e3e; }
+
+    .gate-msg { background:#fff5f5; border:1px solid #fecaca; color:#991b1b; padding:16px 20px; border-radius:10px; margin-bottom:20px; font-size:14px; }
+
+    .modal-backdrop { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:350; display:none; align-items:center; justify-content:center; padding:20px; }
+    .modal-backdrop.open { display:flex; }
+    .modal-card { background:#fff; border-radius:12px; max-width:440px; width:100%; padding:22px 24px; box-shadow:0 20px 50px rgba(0,0,0,.2); max-height:90vh; overflow-y:auto; }
+    .modal-card h3 { font-size:16px; font-weight:700; margin-bottom:14px; color:#1a2035; }
+    .modal-card { font-size:13px; }
+    .modal-card label { display:block; font-size:12px; font-weight:600; color:#5a6a85; margin-bottom:6px; margin-top:10px; }
+    .modal-card label:first-of-type { margin-top:0; }
+    .modal-card input, .modal-card select, .modal-card textarea {
+      width:100%; border:1px solid #dde2ee; border-radius:8px; padding:9px 12px; font-size:13.5px; font-family:inherit;
+    }
+    .modal-card textarea { min-height:72px; resize:vertical; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+  </style>
+</head>
+<body>
+
+<header class="topbar" id="topbar-placeholder"></header>
+
+<div class="layout">
+  <aside class="sidebar" id="navbar-placeholder"></aside>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Đánh giá hiệu suất</div>
+        <p class="page-desc">Một nhân viên — một năm — một quý. <strong>Quản lý</strong> tạo điểm/nhận xét và <strong>Gửi duyệt</strong>; chỉ <strong>Admin / HR</strong> <strong>Phê duyệt</strong> chính thức. Điểm 0–100 bắt buộc khi gửi duyệt.</p>
+      </div>
+    </div>
+
+    <div id="gate-msg" class="gate-msg" style="display:none;">
+      Bạn không có quyền truy cập. Chỉ <strong>Admin</strong>, <strong>HR</strong> hoặc <strong>Manager</strong> mới dùng được trang này.
+    </div>
+
+    <div id="perf-tools" style="display:none;">
+      <div class="toolbar">
+        <div class="field">
+          <label for="f-year">Năm</label>
+          <input type="number" id="f-year" min="2000" max="2100" step="1" />
+        </div>
+        <div class="field">
+          <label for="f-quarter">Quý</label>
+          <select id="f-quarter">
+            <option value="">Tất cả</option>
+            <option value="1">Q1</option>
+            <option value="2">Q2</option>
+            <option value="3">Q3</option>
+            <option value="4">Q4</option>
+          </select>
+        </div>
+        <button type="button" class="btn-primary" id="btn-load" onclick="loadReviewsFromFirst()">Tải danh sách</button>
+        <button type="button" class="btn-ghost-lg" onclick="openCreateModal()">+ Tạo đánh giá</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nhân viên</th>
+                <th>Năm</th>
+                <th>Quý</th>
+                <th class="num">Điểm</th>
+                <th>Trạng thái</th>
+                <th>Ngày ĐG</th>
+                <th>Nhận xét</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="perf-tbody">
+              <tr class="loading-row"><td colspan="8"><span class="spinner"></span> Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination-row" id="perf-pager" style="display:none;">
+          <span id="perf-meta"></span>
+          <div>
+            <button type="button" class="pg-btn" id="pg-prev" onclick="changePage(-1)">← Trước</button>
+            <button type="button" class="pg-btn" id="pg-next" onclick="changePage(1)">Sau →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const API_BASE = '/api';
+let token = localStorage.getItem('hrm_access_token') || '';
+let currentUser = null;
+try { currentUser = JSON.parse(localStorage.getItem('hrm_user') || 'null'); } catch (_) {}
+
+let state = { page: 0, size: 12, totalPages: 0 };
+let employeesCache = [];
+
+function logout() { HRMFrags.logout(); }
+
+function canAccess() {
+  const r = currentUser && String(currentUser.role || '').trim().toUpperCase();
+  return r === 'ADMIN' || r === 'HR' || r === 'MANAGER';
+}
+
+/** Phê duyệt cuối (SUBMITTED → APPROVED): chỉ Admin / HR */
+function canApproveOfficial() {
+  const r = currentUser && String(currentUser.role || '').trim().toUpperCase();
+  return r === 'ADMIN' || r === 'HR';
+}
+
+function showToast(msg, isErr) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (isErr ? ' error' : '');
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(function () { el.remove(); }, 4000);
+}
+
+function esc(s) {
+  if (s == null || s === '') return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+async function apiFetch(path, options) {
+  const headers = { 'Authorization': 'Bearer ' + token, ...(options && options.headers || {}) };
+  const method = (options && options.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
+  const res = await fetch(API_BASE + path, { ...options, headers });
+  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+  return res;
+}
+
+function defaultYearQuarter() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const q = Math.min(4, Math.floor(d.getMonth() / 3) + 1);
+  return { y: y, q: q };
+}
+
+function initFilters() {
+  const dq = defaultYearQuarter();
+  const y = document.getElementById('f-year');
+  const q = document.getElementById('f-quarter');
+  y.value = dq.y;
+  q.value = String(dq.q);
+}
+
+async function loadEmployees() {
+  try {
+    const res = await apiFetch('/employees?status=ACTIVE&page=0&size=500&sort=fullName,asc');
+    if (!res.ok) { employeesCache = []; return; }
+    const data = await res.json();
+    employeesCache = data.content || [];
+  } catch (_) {
+    employeesCache = [];
+  }
+}
+
+function openCreateModal() {
+  const sel = document.getElementById('mc-emp');
+  sel.innerHTML = '<option value="">— Chọn nhân viên —</option>';
+  employeesCache.forEach(function (e) {
+    const o = document.createElement('option');
+    o.value = e.id;
+    o.textContent = (e.fullName || e.employeeCode || ('#' + e.id));
+    sel.appendChild(o);
+  });
+  const dq = defaultYearQuarter();
+  document.getElementById('mc-year').value = dq.y;
+  document.getElementById('mc-quarter').value = String(dq.q);
+  document.getElementById('mc-score').value = '';
+  document.getElementById('mc-comment').value = '';
+  document.getElementById('modal-create').classList.add('open');
+}
+
+function closeCreateModal() {
+  document.getElementById('modal-create').classList.remove('open');
+}
+
+function openEditModal(row) {
+  document.getElementById('ed-id').value = row.id;
+  document.getElementById('ed-score').value = row.score != null ? row.score : '';
+  document.getElementById('ed-comment').value = row.reviewComment || '';
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('modal-edit').classList.remove('open');
+}
+
+async function submitCreate() {
+  const employeeId = parseInt(document.getElementById('mc-emp').value, 10);
+  const reviewYear = parseInt(document.getElementById('mc-year').value, 10);
+  const reviewQuarter = parseInt(document.getElementById('mc-quarter').value, 10);
+  const scoreRaw = document.getElementById('mc-score').value.trim();
+  const reviewComment = document.getElementById('mc-comment').value.trim() || null;
+  if (!employeeId) { showToast('Chọn nhân viên', true); return; }
+  if (!reviewYear || reviewYear < 2000 || reviewYear > 2100) { showToast('Năm không hợp lệ', true); return; }
+  if (!reviewQuarter || reviewQuarter < 1 || reviewQuarter > 4) { showToast('Quý không hợp lệ', true); return; }
+  const body = { employeeId: employeeId, reviewYear: reviewYear, reviewQuarter: reviewQuarter, reviewComment: reviewComment };
+  if (scoreRaw !== '') {
+    const sc = parseInt(scoreRaw, 10);
+    if (Number.isNaN(sc) || sc < 0 || sc > 100) { showToast('Điểm phải từ 0 đến 100', true); return; }
+    body.score = sc;
+  }
+  const btn = document.getElementById('mc-save');
+  btn.disabled = true;
+  try {
+    const res = await apiFetch('/performance-reviews', { method: 'POST', body: JSON.stringify(body) });
+    const txt = await res.text();
+    let data = {};
+    try { data = txt ? JSON.parse(txt) : {}; } catch (_) {}
+    if (!res.ok) {
+      showToast(data.message || ('Tạo thất bại (' + res.status + ')'), true);
+      return;
+    }
+    showToast('Đã tạo bản nháp (DRAFT)');
+    closeCreateModal();
+    state.page = 0;
+    loadReviews();
+  } catch (_) {
+    showToast('Lỗi kết nối', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function submitEdit() {
+  const id = document.getElementById('ed-id').value;
+  const scoreRaw = document.getElementById('ed-score').value.trim();
+  const reviewComment = document.getElementById('ed-comment').value;
+  const body = { reviewComment: reviewComment };
+  if (scoreRaw !== '') {
+    const sc = parseInt(scoreRaw, 10);
+    if (Number.isNaN(sc) || sc < 0 || sc > 100) { showToast('Điểm phải từ 0 đến 100', true); return; }
+    body.score = sc;
+  }
+  const btn = document.getElementById('ed-save');
+  btn.disabled = true;
+  try {
+    const res = await apiFetch('/performance-reviews/' + encodeURIComponent(id), { method: 'PUT', body: JSON.stringify(body) });
+    const txt = await res.text();
+    let data = {};
+    try { data = txt ? JSON.parse(txt) : {}; } catch (_) {}
+    if (!res.ok) {
+      showToast(data.message || ('Lưu thất bại (' + res.status + ')'), true);
+      return;
+    }
+    showToast('Đã cập nhật bản nháp');
+    closeEditModal();
+    loadReviews();
+  } catch (_) {
+    showToast('Lỗi kết nối', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function doSubmit(id) {
+  if (!confirm('Gửi duyệt? Cần có điểm 0–100.')) return;
+  try {
+    const res = await apiFetch('/performance-reviews/' + encodeURIComponent(id) + '/submit', { method: 'POST' });
+    const txt = await res.text();
+    let data = {};
+    try { data = txt ? JSON.parse(txt) : {}; } catch (_) {}
+    if (!res.ok) {
+      showToast(data.message || ('Không gửi được (' + res.status + ')'), true);
+      return;
+    }
+    showToast('Đã chuyển sang SUBMITTED');
+    loadReviews();
+  } catch (_) {
+    showToast('Lỗi kết nối', true);
+  }
+}
+
+async function doApprove(id) {
+  if (!confirm('Phê duyệt đánh giá này?')) return;
+  try {
+    const res = await apiFetch('/performance-reviews/' + encodeURIComponent(id) + '/approve', { method: 'POST' });
+    const txt = await res.text();
+    let data = {};
+    try { data = txt ? JSON.parse(txt) : {}; } catch (_) {}
+    if (!res.ok) {
+      showToast(data.message || ('Không duyệt được (' + res.status + ')'), true);
+      return;
+    }
+    showToast('Đã APPROVED');
+    loadReviews();
+  } catch (_) {
+    showToast('Lỗi kết nối', true);
+  }
+}
+
+function changePage(delta) {
+  const next = state.page + delta;
+  if (next < 0 || next >= state.totalPages) return;
+  state.page = next;
+  loadReviews();
+}
+
+function buildQuery() {
+  const y = document.getElementById('f-year').value.trim();
+  const q = document.getElementById('f-quarter').value;
+  const params = new URLSearchParams({ page: state.page, size: state.size });
+  if (y !== '') {
+    params.set('year', y);
+    if (q !== '') params.set('quarter', q);
+  }
+  return params.toString();
+}
+
+function loadReviewsFromFirst() {
+  state.page = 0;
+  loadReviews();
+}
+
+async function loadReviews() {
+  const tbody = document.getElementById('perf-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="8"><span class="spinner"></span> Đang tải...</td></tr>';
+  try {
+    const res = await apiFetch('/performance-reviews?' + buildQuery());
+    if (res.status === 403) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Không có quyền</div></td></tr>';
+      return;
+    }
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const rows = data.content || [];
+    state.totalPages = data.totalPages ?? 0;
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Không có bản ghi. Tạo đánh giá mới hoặc đổi bộ lọc năm/quý.</div></td></tr>';
+    } else {
+      tbody.innerHTML = rows.map(function (r) {
+        const st = (r.status || '').toString();
+        const name = esc(r.employeeName || '—');
+        const score = r.score != null ? r.score : '—';
+        const rd = r.reviewDate || '—';
+        const cmt = esc((r.reviewComment || '').trim()) || '—';
+        let actions = '';
+        if (st === 'DRAFT') {
+          actions = '<button type="button" class="btn-amber" onclick="editRow(' + r.id + ')">Sửa</button>' +
+            '<button type="button" class="btn-green" onclick="doSubmit(' + r.id + ')">Gửi duyệt</button>';
+        } else if (st === 'SUBMITTED') {
+          actions = canApproveOfficial()
+            ? '<button type="button" class="btn-green" onclick="doApprove(' + r.id + ')">Phê duyệt</button>'
+            : '<span style="color:#8a94a6;font-size:12px;">Chờ HR / Admin</span>';
+        } else {
+          actions = '<span style="color:#8a94a6;font-size:12px;">—</span>';
+        }
+        return '<tr>' +
+          '<td><strong>' + name + '</strong></td>' +
+          '<td>' + esc(r.reviewYear) + '</td>' +
+          '<td>Q' + esc(r.reviewQuarter) + '</td>' +
+          '<td class="num">' + esc(score) + '</td>' +
+          '<td><span class="badge ' + esc(st) + '">' + esc(st) + '</span></td>' +
+          '<td style="font-size:12px;color:#5a6a85;white-space:nowrap;">' + esc(rd) + '</td>' +
+          '<td class="cmt">' + cmt + '</td>' +
+          '<td style="white-space:nowrap;">' + actions + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    const pager = document.getElementById('perf-pager');
+    const meta = document.getElementById('perf-meta');
+    const total = data.totalElements ?? 0;
+    meta.textContent = 'Trang ' + ((data.number ?? 0) + 1) + ' / ' + Math.max(1, state.totalPages || 1) + ' · ' + total + ' bản ghi';
+    pager.style.display = rows.length ? 'flex' : 'none';
+    document.getElementById('pg-prev').disabled = (data.number ?? 0) <= 0;
+    document.getElementById('pg-next').disabled = (data.number ?? 0) >= state.totalPages - 1;
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Lỗi tải dữ liệu</div></td></tr>';
+  }
+}
+
+async function editRow(id) {
+  try {
+    const res = await apiFetch('/performance-reviews/' + encodeURIComponent(id));
+    if (!res.ok) { showToast('Không có dữ liệu', true); return; }
+    const r = await res.json();
+    openEditModal(r);
+  } catch (_) {
+    showToast('Lỗi tải chi tiết', true);
+  }
+}
+
+function boot() {
+  if (!token) { window.location.href = '/login'; return; }
+  if (!canAccess()) {
+    document.getElementById('gate-msg').style.display = 'block';
+    return;
+  }
+  document.getElementById('perf-tools').style.display = 'block';
+  initFilters();
+  loadEmployees().then(function () { loadReviews(); });
+}
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+
+<!-- Modal: tạo -->
+<div id="modal-create" class="modal-backdrop" onclick="if(event.target===this)closeCreateModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h3>Tạo đánh giá (DRAFT)</h3>
+    <label for="mc-emp">Nhân viên</label>
+    <select id="mc-emp"></select>
+    <label for="mc-year">Năm</label>
+    <input type="number" id="mc-year" min="2000" max="2100" />
+    <label for="mc-quarter">Quý</label>
+    <select id="mc-quarter">
+      <option value="1">Q1</option>
+      <option value="2">Q2</option>
+      <option value="3">Q3</option>
+      <option value="4">Q4</option>
+    </select>
+    <label for="mc-score">Điểm (0–100, tuỳ chọn khi tạo)</label>
+    <input type="number" id="mc-score" min="0" max="100" placeholder="Để trống nếu nhập sau" />
+    <label for="mc-comment">Nhận xét</label>
+    <textarea id="mc-comment" placeholder="Tuỳ chọn"></textarea>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost-lg" onclick="closeCreateModal()">Huỷ</button>
+      <button type="button" class="btn-primary" id="mc-save" onclick="submitCreate()">Tạo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: sửa DRAFT -->
+<div id="modal-edit" class="modal-backdrop" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h3>Sửa bản nháp (DRAFT)</h3>
+    <input type="hidden" id="ed-id" />
+    <label for="ed-score">Điểm (0–100)</label>
+    <input type="number" id="ed-score" min="0" max="100" />
+    <label for="ed-comment">Nhận xét</label>
+    <textarea id="ed-comment"></textarea>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost-lg" onclick="closeEditModal()">Huỷ</button>
+      <button type="button" class="btn-primary" id="ed-save" onclick="submitEdit()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
