@@ -3,32 +3,22 @@ package org.example.hrmsystem.service;
 import org.example.hrmsystem.dto.LeaveRequestCreateDto;
 import org.example.hrmsystem.dto.LeaveRequestResponse;
 import org.example.hrmsystem.exception.ResourceNotFoundException;
-import org.example.hrmsystem.model.Attendance;
 import org.example.hrmsystem.model.Employee;
 import org.example.hrmsystem.model.LeaveRequest;
 import org.example.hrmsystem.model.LeaveStatus;
 import org.example.hrmsystem.model.LeaveType;
 import org.example.hrmsystem.model.Role;
-import org.example.hrmsystem.model.UserAccount;
-import org.example.hrmsystem.repository.AttendanceRepository;
-import org.example.hrmsystem.repository.DepartmentRepository;
 import org.example.hrmsystem.repository.EmployeeRepository;
 import org.example.hrmsystem.repository.LeaveRequestRepository;
-import org.example.hrmsystem.repository.UserAccountRepository;
 import org.example.hrmsystem.security.AppUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -36,7 +26,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -45,35 +34,23 @@ public class LeaveRequestService {
     private static final Logger log = LoggerFactory.getLogger(LeaveRequestService.class);
 
     private final LeaveRequestRepository leaveRequestRepository;
-    private final AttendanceRepository attendanceRepository;
     private final EmployeeRepository employeeRepository;
     private final ManagerEmployeeScopeService managerEmployeeScopeService;
     private final AttendanceLeaveSyncService attendanceLeaveSyncService;
     private final NotificationService notificationService;
-    private final UserAccountRepository userAccountRepository;
-    private final DepartmentRepository departmentRepository;
-    private final TaskExecutor notificationTaskExecutor;
 
     public LeaveRequestService(
             LeaveRequestRepository leaveRequestRepository,
-            AttendanceRepository attendanceRepository,
             EmployeeRepository employeeRepository,
             ManagerEmployeeScopeService managerEmployeeScopeService,
             AttendanceLeaveSyncService attendanceLeaveSyncService,
-            NotificationService notificationService,
-            UserAccountRepository userAccountRepository,
-            DepartmentRepository departmentRepository,
-            @Qualifier("notificationTaskExecutor") TaskExecutor notificationTaskExecutor
+            NotificationService notificationService
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
-        this.attendanceRepository = attendanceRepository;
         this.employeeRepository = employeeRepository;
         this.managerEmployeeScopeService = managerEmployeeScopeService;
         this.attendanceLeaveSyncService = attendanceLeaveSyncService;
         this.notificationService = notificationService;
-        this.userAccountRepository = userAccountRepository;
-        this.departmentRepository = departmentRepository;
-        this.notificationTaskExecutor = notificationTaskExecutor;
     }
 
     @Transactional
@@ -106,7 +83,6 @@ public class LeaveRequestService {
                 "You already have a pending or approved leave request that overlaps with these dates"
             );
         }
-        assertNoAttendanceConflict(employeeId, dto.getStartDate(), dto.getEndDate());
 
         int totalDays = countWorkingDays(dto.getStartDate(), dto.getEndDate());
 
@@ -132,6 +108,8 @@ public class LeaveRequestService {
         Page<LeaveRequest> pageResult = leaveRequestRepository
             .findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable);
 
+        String employeeName = resolveEmployeeName(employeeId);
+
         List<LeaveRequestResponse> content = pageResult.getContent().stream()
             .map(lr -> toResponse(lr, resolveEmployeeName(lr.getEmployeeId()), null))
             .toList();
@@ -147,15 +125,10 @@ public class LeaveRequestService {
     }
 
     /**
-     * Hàng chờ theo phân cấp duyệt:
-     * <ul>
-     *   <li>MANAGER — đơn của EMPLOYEE (hoặc chưa có user) trong phòng quản lý</li>
-     *   <li>HR — đơn của MANAGER hoặc ADMIN</li>
-     *   <li>ADMIN — đơn của MANAGER hoặc HR</li>
-     * </ul>
+     * HR / ADMIN: toàn bộ đơn chờ duyệt. MANAGER: chỉ nhân viên thuộc phòng quản lý.
      */
     public Map<String, Object> listPending(AppUserDetails reviewer, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size);
         Role role = Role.valueOf(reviewer.getRole());
         if (role == Role.EMPLOYEE) {
             throw new AccessDeniedException("Employees cannot view the approval queue");
@@ -164,21 +137,16 @@ public class LeaveRequestService {
         Page<LeaveRequest> pageResult;
         if (role == Role.MANAGER) {
             Long mgrKey = resolveActorEmployeeKey(reviewer);
-            Set<Long> queueIds = managerEmployeeScopeService.managedEmployeeApplicantIds(mgrKey);
-            if (queueIds.isEmpty()) {
+            Set<Long> visible = managerEmployeeScopeService.visibleEmployeeIdsForManager(mgrKey);
+            if (visible.isEmpty()) {
                 pageResult = Page.empty(pageable);
             } else {
                 pageResult = leaveRequestRepository.findByStatusAndEmployeeIdInOrderByCreatedAtDesc(
-                        LeaveStatus.PENDING, queueIds, pageable);
+                        LeaveStatus.PENDING, visible, pageable);
             }
-        } else if (role == Role.HR) {
-            pageResult = leaveRequestRepository.findByStatusAndApplicantAccountRolesIn(
-                    LeaveStatus.PENDING, List.of(Role.MANAGER, Role.ADMIN), pageable);
-        } else if (role == Role.ADMIN) {
-            pageResult = leaveRequestRepository.findByStatusAndApplicantAccountRolesIn(
-                    LeaveStatus.PENDING, List.of(Role.MANAGER, Role.HR), pageable);
         } else {
-            throw new IllegalStateException("Unexpected role for approval queue: " + role);
+            pageResult = leaveRequestRepository.findByStatusOrderByCreatedAtDesc(
+                    LeaveStatus.PENDING, pageable);
         }
 
         List<LeaveRequestResponse> content = pageResult.getContent().stream()
@@ -197,7 +165,7 @@ public class LeaveRequestService {
 
     @Transactional
     public LeaveRequestResponse approve(Long requestId, AppUserDetails reviewer) {
-        LeaveRequest req = leaveRequestRepository.findByIdForUpdate(requestId)
+        LeaveRequest req = leaveRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave request not found: " + requestId));
         if (req.getStatus() != LeaveStatus.PENDING) {
             throw new IllegalArgumentException("Only PENDING requests can be approved");
@@ -214,7 +182,7 @@ public class LeaveRequestService {
                 req.getEmployeeId(), req.getStartDate(), req.getEndDate());
 
         employeeRepository.findById(req.getEmployeeId()).ifPresent(emp ->
-                scheduleLeaveDecisionNotifyAfterCommit(
+                notificationService.notifyLeaveDecision(
                         emp.getId(),
                         emp.getEmail(),
                         emp.getFullName(),
@@ -229,7 +197,7 @@ public class LeaveRequestService {
 
     @Transactional
     public LeaveRequestResponse reject(Long requestId, AppUserDetails reviewer) {
-        LeaveRequest req = leaveRequestRepository.findByIdForUpdate(requestId)
+        LeaveRequest req = leaveRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Leave request not found: " + requestId));
         if (req.getStatus() != LeaveStatus.PENDING) {
             throw new IllegalArgumentException("Only PENDING requests can be rejected");
@@ -244,7 +212,7 @@ public class LeaveRequestService {
 
         employeeRepository.findById(req.getEmployeeId()).ifPresent(emp -> {
             log.info("[HRM-MAIL] leave reject notify employeeId={} email={}", emp.getId(), emp.getEmail());
-            scheduleLeaveDecisionNotifyAfterCommit(
+            notificationService.notifyLeaveDecision(
                     emp.getId(),
                     emp.getEmail(),
                     emp.getFullName(),
@@ -259,80 +227,21 @@ public class LeaveRequestService {
     }
 
     private void assertCanReview(LeaveRequest req, AppUserDetails reviewer) {
-        Role reviewerRole = Role.valueOf(reviewer.getRole());
-        if (reviewerRole == Role.EMPLOYEE) {
+        Role role = Role.valueOf(reviewer.getRole());
+        if (role == Role.EMPLOYEE) {
             throw new AccessDeniedException("Employees cannot review leave requests");
         }
-        Long applicantId = req.getEmployeeId();
-        if (isSelfLeaveReview(applicantId, reviewer)) {
-            throw new AccessDeniedException("Cannot review your own leave request");
+        if (role == Role.ADMIN || role == Role.HR) {
+            return;
         }
-        Role applicantRole = resolveApplicantRole(applicantId);
-        Long reviewerKey = resolveActorEmployeeKey(reviewer);
-
-        switch (applicantRole) {
-            case EMPLOYEE -> {
-                if (reviewerRole == Role.MANAGER) {
-                    if (managerEmployeeScopeService.managesEmployee(reviewerKey, applicantId)) {
-                        return;
-                    }
-                    throw new AccessDeniedException("Only your department manager can approve this request");
-                }
-                if (reviewerRole == Role.HR || reviewerRole == Role.ADMIN) {
-                    if (lacksDepartmentManager(applicantId)) {
-                        return;
-                    }
-                    throw new AccessDeniedException("This request must be approved by the department manager");
-                }
-                throw new AccessDeniedException("Not allowed to review this leave request");
+        if (role == Role.MANAGER) {
+            Long mgrKey = resolveActorEmployeeKey(reviewer);
+            if (!managerEmployeeScopeService.managesEmployee(mgrKey, req.getEmployeeId())) {
+                throw new AccessDeniedException("You can only review leave for employees in your department");
             }
-            case MANAGER -> {
-                if (reviewerRole == Role.HR || reviewerRole == Role.ADMIN) {
-                    return;
-                }
-                throw new AccessDeniedException("Manager leave requests are approved by HR or Admin");
-            }
-            case HR -> {
-                if (reviewerRole == Role.ADMIN) {
-                    return;
-                }
-                throw new AccessDeniedException("HR leave requests are approved by Admin only");
-            }
-            case ADMIN -> {
-                if (reviewerRole == Role.HR) {
-                    return;
-                }
-                throw new AccessDeniedException("Admin leave requests are approved by HR only");
-            }
+            return;
         }
-    }
-
-    private boolean isSelfLeaveReview(Long applicantEmployeeId, AppUserDetails reviewer) {
-        if (reviewer.getEmployeeId() != null && reviewer.getEmployeeId().equals(applicantEmployeeId)) {
-            return true;
-        }
-        return reviewer.getUserId() != null && reviewer.getUserId().equals(applicantEmployeeId);
-    }
-
-    private Role resolveApplicantRole(Long employeeId) {
-        return userAccountRepository.findByEmployeeId(employeeId)
-                .map(UserAccount::getRole)
-                .orElse(Role.EMPLOYEE);
-    }
-
-    /** Phòng không gắn trưởng phòng → HR/Admin được duyệt thay cho cấp nhân viên. */
-    private boolean lacksDepartmentManager(Long employeeId) {
-        Optional<Employee> emp = employeeRepository.findById(employeeId);
-        if (emp.isEmpty()) {
-            return true;
-        }
-        Long deptId = emp.get().getDepartmentId();
-        if (deptId == null) {
-            return true;
-        }
-        return departmentRepository.findById(deptId)
-                .map(d -> d.getManagerId() == null)
-                .orElse(true);
+        throw new AccessDeniedException("Not allowed to review leave requests");
     }
 
     /** Khóa giống chấm công: employee_id hoặc user id fallback. */
@@ -357,55 +266,6 @@ public class LeaveRequestService {
             current = current.plusDays(1);
         }
         return count;
-    }
-
-    /**
-     * Gửi email/notification sau khi transaction duyệt commit — phản hồi API nhanh, SMTP không chặn HTTP.
-     */
-    private void scheduleLeaveDecisionNotifyAfterCommit(
-            Long employeeId,
-            String email,
-            String fullName,
-            boolean approved,
-            LocalDate start,
-            LocalDate end
-    ) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            notificationTaskExecutor.execute(() -> runLeaveNotifySafe(employeeId, email, fullName, approved, start, end));
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                notificationTaskExecutor.execute(() -> runLeaveNotifySafe(employeeId, email, fullName, approved, start, end));
-            }
-        });
-    }
-
-    private void runLeaveNotifySafe(
-            Long employeeId,
-            String email,
-            String fullName,
-            boolean approved,
-            LocalDate start,
-            LocalDate end
-    ) {
-        try {
-            notificationService.notifyLeaveDecision(employeeId, email, fullName, approved, start, end);
-        } catch (Exception ex) {
-            log.warn("Leave decision notification failed employeeId={}: {}", employeeId, ex.getMessage());
-        }
-    }
-
-    private void assertNoAttendanceConflict(Long employeeId, LocalDate startDate, LocalDate endDate) {
-        List<Attendance> attendanceInRange = attendanceRepository
-                .findByEmployeeIdAndAttendanceDateBetween(employeeId, startDate, endDate);
-        boolean hasCheckInOrCheckOut = attendanceInRange.stream()
-                .anyMatch(a -> a.getCheckIn() != null || a.getCheckOut() != null);
-        if (hasCheckInOrCheckOut) {
-            throw new IllegalArgumentException(
-                    "Invalid leave request: attendance already exists (check-in/check-out) in selected date range");
-        }
     }
 
     private LeaveRequestResponse toResponse(LeaveRequest lr, String employeeName, String message) {

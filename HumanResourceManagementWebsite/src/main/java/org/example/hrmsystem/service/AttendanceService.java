@@ -228,7 +228,7 @@ public class AttendanceService {
                 return emptyHistoryPage(page, ym, singleDay);
             }
         } else if (access == AttendanceHistoryAccess.MANAGED_DEPARTMENTS) {
-            managerVisibleIds = managerEmployeeScopeService.attendanceVisibleEmployeeIdsForManager(actorEmployeeId);
+            managerVisibleIds = managerEmployeeScopeService.visibleEmployeeIdsForManager(actorEmployeeId);
             if (managerVisibleIds.isEmpty()) {
                 return emptyHistoryPage(page, ym, singleDay);
             }
