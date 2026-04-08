@@ -9,6 +9,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class AuthExceptionHandler {
@@ -31,10 +32,22 @@ public class AuthExceptionHandler {
                 .body(Map.of("message", "Username and password are required"));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("message", ex.getMessage() != null ? ex.getMessage() : "Bad request"));
+    }
+
     @ExceptionHandler(AuthenticationServiceException.class)
     public ResponseEntity<Map<String, String>> handleAuthService(AuthenticationServiceException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of("message", "Authentication service is temporarily unavailable. Check database connection."));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatus(ResponseStatusException ex) {
+        String reason = ex.getReason() != null ? ex.getReason() : ex.getStatusCode().toString();
+        return ResponseEntity.status(ex.getStatusCode()).body(Map.of("message", reason));
     }
 
     @ExceptionHandler(Exception.class)

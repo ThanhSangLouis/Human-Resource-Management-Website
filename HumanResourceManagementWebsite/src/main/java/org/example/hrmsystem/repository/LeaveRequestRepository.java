@@ -2,6 +2,7 @@ package org.example.hrmsystem.repository;
 
 import org.example.hrmsystem.model.LeaveRequest;
 import org.example.hrmsystem.model.LeaveStatus;
+import org.example.hrmsystem.model.LeaveType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -106,5 +107,24 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("rangeStart") LocalDate rangeStart,
             @Param("rangeEnd") LocalDate rangeEnd,
             Pageable pageable
+    );
+
+    /**
+     * Tổng ngày phép năm (ANNUAL) đã duyệt, giao với khoảng [yearStart, yearEnd] (thường cả năm dương lịch).
+     */
+    @Query("""
+            SELECT COALESCE(SUM(lr.totalDays), 0) FROM LeaveRequest lr
+            WHERE lr.employeeId = :employeeId
+              AND lr.status = :approved
+              AND lr.leaveType = :annualType
+              AND lr.startDate <= :yearEnd
+              AND lr.endDate >= :yearStart
+            """)
+    Long sumApprovedAnnualDaysOverlappingRange(
+            @Param("employeeId") Long employeeId,
+            @Param("approved") LeaveStatus approved,
+            @Param("annualType") LeaveType annualType,
+            @Param("yearStart") LocalDate yearStart,
+            @Param("yearEnd") LocalDate yearEnd
     );
 }

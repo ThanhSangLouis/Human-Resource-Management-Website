@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trợ lý AI – HRM System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="/frags.js?v=4"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f4f6fb; color: #1a2035; min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { background:#fff; border-bottom:1px solid #e5e9f2; padding:10px 32px; min-height:60px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 20px; position:sticky; top:0; z-index:100; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .topbar-logo { font-size:18px; font-weight:700; color:#2c3e8c; display:flex; align-items:center; gap:8px; }
+    .topbar-logo span.dot { color:#f5a623; }
+    .topbar-nav { display:flex; gap:28px; flex-wrap:wrap; }
+    .topbar-nav a { text-decoration:none; color:#5a6a85; font-size:14px; font-weight:500; padding:4px 0; border-bottom:2px solid transparent; }
+    .topbar-nav a.active, .topbar-nav a:hover { color:#2c3e8c; border-bottom-color:#2c3e8c; }
+    .topbar-user { display:flex; align-items:center; gap:12px; font-size:14px; color:#5a6a85; margin-left:auto; }
+    .avatar-circle { width:36px; height:36px; border-radius:50%; background:#2c3e8c; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
+    .btn-ghost { background:none; border:1px solid #dde2ee; border-radius:8px; padding:9px 18px; font-size:13.5px; font-weight:500; color:#5a6a85; cursor:pointer; }
+    .btn-ghost:hover { border-color:#2c3e8c; color:#2c3e8c; }
+    .layout { display:flex; flex:1; }
+    .sidebar { width:220px; background:#fff; border-right:1px solid #e5e9f2; padding:24px 0; flex-shrink:0; }
+    .sidebar-section-title { font-size:11px; font-weight:700; color:#8a94a6; letter-spacing:.8px; text-transform:uppercase; padding:0 20px 8px; margin-top:16px; }
+    .sidebar-item { display:flex; align-items:center; gap:10px; padding:9px 20px; font-size:13.5px; color:#5a6a85; text-decoration:none; border-left:3px solid transparent; }
+    .sidebar-item:hover { background:#f0f4ff; color:#2c3e8c; }
+    .sidebar-item.active { background:#eef2ff; color:#2c3e8c; font-weight:600; border-left-color:#2c3e8c; }
+    .main { flex:1; padding:28px 32px; max-width:920px; }
+    .page-title { font-size:14px; font-weight:600; color:#8a94a6; letter-spacing:.3px; text-transform:uppercase; margin-bottom:16px; }
+    .card { background:#fff; border-radius:12px; border:1px solid #e5e9f2; box-shadow:0 2px 8px rgba(0,0,0,.04); overflow:hidden; }
+    .card-head { background:linear-gradient(135deg,#2c3e8c,#1e2d6e); padding:20px 24px; color:#fff; }
+    .card-head h1 { font-size:18px; font-weight:700; }
+    .card-head p { font-size:13px; opacity:.88; margin-top:4px; }
+    .card-body { padding:20px 24px; }
+    #ai-log { min-height:280px; max-height:420px; overflow-y:auto; border:1px solid #e5e9f2; border-radius:10px; padding:14px; background:#fafbff; font-size:13.5px; line-height:1.5; margin-bottom:14px; }
+    .bubble { margin-bottom:12px; padding:10px 12px; border-radius:10px; max-width:95%; }
+    .bubble.user { background:#e8ecff; margin-left:auto; text-align:right; }
+    .bubble.ai { background:#fff; border:1px solid #e5e9f2; }
+    .bubble .meta { font-size:11px; color:#8a94a6; margin-top:6px; }
+    textarea { width:100%; min-height:72px; padding:10px 12px; border:1px solid #dde2ee; border-radius:8px; font-family:inherit; font-size:14px; resize:vertical; }
+    textarea:focus { outline:none; border-color:#2c3e8c; }
+    .row { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+    .btn-primary { background:#2c3e8c; color:#fff; border:none; border-radius:8px; padding:10px 20px; font-size:14px; font-weight:600; cursor:pointer; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .err { color:#b91c1c; font-size:13px; margin-top:8px; }
+    #toast { position:fixed; bottom:24px; right:24px; background:#1a2035; color:#fff; padding:12px 16px; border-radius:8px; font-size:13px; display:none; z-index:400; }
+  </style>
+</head>
+<body>
+
+<header class="topbar" id="topbar-placeholder"></header>
+<div class="layout">
+  <aside class="sidebar" id="navbar-placeholder"></aside>
+  <main class="main">
+    <div class="page-title">Trợ lý AI</div>
+    <div class="card">
+      <div class="card-head">
+        <h1>Chat HR (Gemini)</h1>
+        <p>Hỏi về chấm công, phép, thông báo hoặc policy. Dữ liệu lấy từ hệ thống — không đưa mật khẩu lên đây.</p>
+      </div>
+      <div class="card-body">
+        <div id="ai-log"></div>
+        <div class="row">
+          <div style="flex:1;min-width:200px;">
+            <textarea id="ai-input" placeholder="Ví dụ: quy định nghỉ phép, chấm công hôm nay, tóm tắt thông báo…"></textarea>
+          </div>
+          <button type="button" class="btn-primary" id="ai-send">Gửi</button>
+        </div>
+        <p class="err" id="ai-err" style="display:none;"></p>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+(function () {
+  const logEl = document.getElementById('ai-log');
+  const input = document.getElementById('ai-input');
+  const sendBtn = document.getElementById('ai-send');
+  const errEl = document.getElementById('ai-err');
+  const toast = document.getElementById('toast');
+
+  function showErr(msg) {
+    errEl.textContent = msg || '';
+    errEl.style.display = msg ? 'block' : 'none';
+  }
+
+  function toastMsg(msg) {
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(function () { toast.style.display = 'none'; }, 3200);
+  }
+
+  function appendBubble(role, html, meta) {
+    const d = document.createElement('div');
+    d.className = 'bubble ' + (role === 'user' ? 'user' : 'ai');
+    d.innerHTML = html + (meta ? '<div class="meta">' + meta + '</div>' : '');
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  async function send() {
+    const token = HRMFrags.getToken();
+    if (!token) {
+      HRMFrags.redirectLogin();
+      return;
+    }
+    const text = (input.value || '').trim();
+    if (!text) return;
+    showErr('');
+    appendBubble('user', escapeHtml(text), '');
+    input.value = '';
+    sendBtn.disabled = true;
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ message: text })
+      });
+      if (res.status === 401) {
+        HRMFrags.redirectLogin();
+        return;
+      }
+      const data = await res.json().catch(function () { return null; });
+      if (!res.ok) {
+        var msg = (data && data.message) ? data.message : ('Lỗi ' + res.status);
+        showErr(msg);
+        toastMsg(msg);
+        return;
+      }
+      var reply = escapeHtml(data.reply || '—').replace(/\n/g, '<br/>');
+      var meta = 'intent: ' + (data.intent || '—');
+      if (data.fallback) meta += ' · fallback';
+      if (data.citations && data.citations.length) {
+        meta += ' · citations: ' + data.citations.map(function (c) { return c.source; }).join(', ');
+      }
+      appendBubble('ai', reply, meta);
+    } catch (e) {
+      showErr('Không gọi được API.');
+      toastMsg('Lỗi mạng');
+    } finally {
+      sendBtn.disabled = false;
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  document.addEventListener('hrm:frags-ready', function () {
+    if (!HRMFrags.getToken()) {
+      HRMFrags.redirectLogin();
+    }
+  });
+
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) send();
+  });
+})();
+</script>
+</body>
+</html>
