@@ -12,6 +12,7 @@ import org.example.hrmsystem.model.Role;
 import org.example.hrmsystem.repository.EmployeeRepository;
 import org.example.hrmsystem.repository.PerformanceReviewRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 
 @Service
 public class PerformanceReviewService {
@@ -43,14 +45,37 @@ public class PerformanceReviewService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PerformanceReviewResponse> list(Integer year, Integer quarter, Pageable pageable) {
+    public Page<PerformanceReviewResponse> list(
+            Integer year,
+            Integer quarter,
+            Pageable pageable,
+            Role role,
+            Long actorEmployeeKey
+    ) {
         Page<PerformanceReview> page;
-        if (year != null && quarter != null) {
-            page = performanceReviewRepository.findByReviewYearAndReviewQuarter(year, quarter, pageable);
-        } else if (year != null) {
-            page = performanceReviewRepository.findByReviewYear(year, pageable);
+        if (role == Role.ADMIN || role == Role.HR) {
+            if (year != null && quarter != null) {
+                page = performanceReviewRepository.findByReviewYearAndReviewQuarter(year, quarter, pageable);
+            } else if (year != null) {
+                page = performanceReviewRepository.findByReviewYear(year, pageable);
+            } else {
+                page = performanceReviewRepository.findAll(pageable);
+            }
+        } else if (role == Role.MANAGER) {
+            Set<Long> ids = managerEmployeeScopeService.visibleEmployeeIdsForManager(actorEmployeeKey);
+            if (ids.isEmpty()) {
+                return new PageImpl<>(java.util.List.of(), pageable, 0);
+            }
+            if (year != null && quarter != null) {
+                page = performanceReviewRepository.findByEmployeeIdInAndReviewYearAndReviewQuarter(
+                        ids, year, quarter, pageable);
+            } else if (year != null) {
+                page = performanceReviewRepository.findByEmployeeIdInAndReviewYear(ids, year, pageable);
+            } else {
+                page = performanceReviewRepository.findByEmployeeIdIn(ids, pageable);
+            }
         } else {
-            page = performanceReviewRepository.findAll(pageable);
+            throw new AccessDeniedException("Không có quyền xem đánh giá hiệu suất");
         }
         Map<Long, Employee> em = loadEmployees(page.getContent().stream()
                 .map(PerformanceReview::getEmployeeId)
@@ -59,9 +84,16 @@ public class PerformanceReviewService {
     }
 
     @Transactional(readOnly = true)
-    public PerformanceReviewResponse getById(Long id) {
+    public PerformanceReviewResponse getById(Long id, Role role, Long actorEmployeeKey) {
         PerformanceReview r = performanceReviewRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Performance review not found"));
+        if (role == Role.EMPLOYEE) {
+            throw new AccessDeniedException("Không có quyền xem đánh giá hiệu suất");
+        }
+        if (role == Role.MANAGER
+                && !managerEmployeeScopeService.managesEmployee(actorEmployeeKey, r.getEmployeeId())) {
+            throw new AccessDeniedException("Bạn chỉ xem đánh giá của nhân viên thuộc phạm vi quản lý");
+        }
         Employee e = employeeRepository.findById(r.getEmployeeId()).orElse(null);
         return toResponse(r, e);
     }

@@ -16,6 +16,13 @@
   const USER_KEY    = 'hrm_user';
   const REFRESH_KEY = 'hrm_refresh_token';
 
+  /** Chuẩn hóa role từ localStorage / API (hỗ trợ cả ROLE_EMPLOYEE nếu có). */
+  function normalizeRole(r) {
+    var s = String(r || '').trim().toUpperCase();
+    if (s.indexOf('ROLE_') === 0) s = s.substring(5);
+    return s;
+  }
+
   const HRMFrags = {
     getToken() { return localStorage.getItem(TOKEN_KEY); },
 
@@ -91,16 +98,16 @@
     function roleAllowedTop(allowedAttr, userRole) {
       if (!allowedAttr || !String(allowedAttr).trim()) return true;
       if (!userRole) return false;
-      const list = String(allowedAttr).split(',').map(function (r) { return r.trim().toUpperCase(); });
+      const list = String(allowedAttr).split(',').map(function (r) { return normalizeRole(r); });
       return list.indexOf(userRole) >= 0;
     }
 
     el.querySelectorAll('.topbar-nav a').forEach(function (a) {
       if (a.dataset.nav) {
         if (a.dataset.nav === currentNav) a.classList.add('active');
-        const allowed = a.dataset.roles;
+        var allowed = a.getAttribute('data-roles');
         if (allowed && !roleAllowedTop(allowed, role)) {
-          a.style.display = 'none';
+          a.remove();
         }
       } else {
         var h = a.getAttribute('href');
@@ -137,23 +144,49 @@
     function roleAllowed(allowedAttr, userRole) {
       if (!allowedAttr || !String(allowedAttr).trim()) return true;
       if (!userRole) return false;
-      const list = String(allowedAttr).split(',').map(function (r) { return r.trim().toUpperCase(); });
+      const list = String(allowedAttr).split(',').map(function (r) { return normalizeRole(r); });
       return list.indexOf(userRole) >= 0;
     }
 
     el.querySelectorAll('[data-nav]').forEach(function (link) {
       if (link.dataset.nav === currentNav) link.classList.add('active');
-      const allowed = link.dataset.roles;
+      var allowed = link.getAttribute('data-roles');
       if (allowed && !roleAllowed(allowed, role)) {
-        link.style.display = 'none';
+        link.remove();
       }
     });
+  }
+
+  /** EMPLOYEE: không vào dashboard / phòng ban / nhân viên / lương / đánh giá (chỉ chấm công & nghỉ phép & hồ sơ). */
+  function redirectIfPageForbidden(pathname, roleUpper) {
+    if (!HRMFrags.getToken() || !roleUpper) return true;
+    var p = (pathname || '').toLowerCase();
+    if (p.indexOf('login') >= 0) return true;
+    if (p.indexOf('payroll') >= 0 && ['ADMIN', 'HR'].indexOf(roleUpper) < 0) {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    if ((p.indexOf('/overview') >= 0 || p.indexOf('overview.html') >= 0 || p.indexOf('/dashboard') >= 0)
+        && ['ADMIN', 'HR', 'MANAGER'].indexOf(roleUpper) < 0) {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    if ((p.indexOf('departments') >= 0 || p.indexOf('employees') >= 0 || p.indexOf('performance') >= 0)
+        && ['ADMIN', 'HR', 'MANAGER'].indexOf(roleUpper) < 0) {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    return true;
   }
 
   /* ── Boot ───────────────────────────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', async function () {
     const user = HRMFrags.getUser();
-    const role = user ? String(user.role || '').trim().toUpperCase() : '';
+    const role = normalizeRole(user && user.role);
+
+    if (!redirectIfPageForbidden(window.location.pathname, role)) {
+      return;
+    }
 
     await Promise.all([
       injectTopbar(user, role),

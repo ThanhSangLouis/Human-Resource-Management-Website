@@ -54,13 +54,14 @@ public class EmployeeController {
             @RequestParam(required = false) Long departmentId,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "fullName,asc") String sort
+            @RequestParam(defaultValue = "fullName,asc") String sort,
+            @AuthenticationPrincipal AppUserDetails user
     ) {
         String[] parts = sort.split(",");
         Sort.Direction dir = parts.length > 1 && parts[1].equalsIgnoreCase("desc")
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, parts[0]));
-        return ResponseEntity.ok(employeeService.findAll(keyword, status, departmentId, pageable));
+        return ResponseEntity.ok(employeeService.findAllForActor(user, keyword, status, departmentId, pageable));
     }
 
     /**

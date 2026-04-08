@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Node / Cypress ###
+node_modules/
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/

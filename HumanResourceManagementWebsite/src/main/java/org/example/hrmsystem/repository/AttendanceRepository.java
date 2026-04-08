@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,4 +28,25 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>, J
     /** Tổng số bản ghi chấm công trong khoảng ngày. */
     @Query("SELECT COUNT(a) FROM Attendance a WHERE a.attendanceDate BETWEEN :from AND :to")
     long countInRange(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT a.status, COUNT(a) FROM Attendance a
+            WHERE a.attendanceDate BETWEEN :from AND :to AND a.employeeId IN :empIds
+            GROUP BY a.status
+            """)
+    List<Object[]> countByStatusInRangeForEmployees(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("empIds") Collection<Long> empIds
+    );
+
+    @Query("""
+            SELECT COUNT(a) FROM Attendance a
+            WHERE a.attendanceDate BETWEEN :from AND :to AND a.employeeId IN :empIds
+            """)
+    long countInRangeForEmployees(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("empIds") Collection<Long> empIds
+    );
 }

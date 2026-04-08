@@ -6,10 +6,13 @@ import org.example.hrmsystem.exception.DuplicateResourceException;
 import org.example.hrmsystem.exception.ResourceNotFoundException;
 import org.example.hrmsystem.model.Department;
 import org.example.hrmsystem.model.Employee;
+import org.example.hrmsystem.model.Role;
 import org.example.hrmsystem.repository.DepartmentRepository;
 import org.example.hrmsystem.repository.EmployeeRepository;
+import org.example.hrmsystem.security.AppUserDetails;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +21,14 @@ public class DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final EmployeeRepository employeeRepository;
+    private final ManagerEmployeeScopeService managerEmployeeScopeService;
 
     public DepartmentService(DepartmentRepository departmentRepository,
-                              EmployeeRepository employeeRepository) {
+                             EmployeeRepository employeeRepository,
+                             ManagerEmployeeScopeService managerEmployeeScopeService) {
         this.departmentRepository = departmentRepository;
         this.employeeRepository = employeeRepository;
+        this.managerEmployeeScopeService = managerEmployeeScopeService;
     }
 
     // ── Read ────────────────────────────────────────────────────────────────
@@ -38,6 +44,38 @@ public class DepartmentService {
         Department dept = departmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Phòng ban không tồn tại: id=" + id));
         return toResponse(dept);
+    }
+
+    public Page<DepartmentResponse> findAllForActor(AppUserDetails actor, String keyword, Pageable pageable) {
+        Role role = Role.valueOf(actor.getRole());
+        if (role == Role.ADMIN || role == Role.HR) {
+            return findAll(keyword, pageable);
+        }
+        if (role == Role.MANAGER) {
+            Long key = actor.getEmployeeId() != null ? actor.getEmployeeId() : actor.getUserId();
+            var deptIds = managerEmployeeScopeService.managedDepartmentIds(key);
+            if (deptIds.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+            return departmentRepository.findByIdInWithOptionalKeyword(deptIds, kw, pageable).map(this::toResponse);
+        }
+        throw new AccessDeniedException("Không có quyền xem danh sách phòng ban");
+    }
+
+    public DepartmentResponse findByIdForActor(Long id, AppUserDetails actor) {
+        Role role = Role.valueOf(actor.getRole());
+        if (role == Role.ADMIN || role == Role.HR) {
+            return findById(id);
+        }
+        if (role == Role.MANAGER) {
+            Long key = actor.getEmployeeId() != null ? actor.getEmployeeId() : actor.getUserId();
+            if (!managerEmployeeScopeService.managedDepartmentIds(key).contains(id)) {
+                throw new AccessDeniedException("Bạn chỉ được xem phòng ban trong phạm vi quản lý");
+            }
+            return findById(id);
+        }
+        throw new AccessDeniedException("Không có quyền xem phòng ban");
     }
 
     // ── Create ──────────────────────────────────────────────────────────────

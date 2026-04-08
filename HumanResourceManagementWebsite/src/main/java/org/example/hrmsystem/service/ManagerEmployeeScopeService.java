@@ -28,7 +28,11 @@ public class ManagerEmployeeScopeService {
         this.employeeRepository = employeeRepository;
     }
 
-    public Set<Long> visibleEmployeeIdsForManager(Long managerEmployeeId) {
+    /**
+     * Các phòng ban mà trưởng phòng được coi là quản lý: làm manager_id trên Department,
+     * hoặc (fallback) phòng ban của chính nhân viên đó.
+     */
+    public Set<Long> managedDepartmentIds(Long managerEmployeeId) {
         if (managerEmployeeId == null) {
             return Set.of();
         }
@@ -42,6 +46,11 @@ public class ManagerEmployeeScopeService {
                     .filter(Objects::nonNull)
                     .ifPresent(deptIds::add);
         }
+        return deptIds;
+    }
+
+    public Set<Long> visibleEmployeeIdsForManager(Long managerEmployeeId) {
+        Set<Long> deptIds = managedDepartmentIds(managerEmployeeId);
         if (deptIds.isEmpty()) {
             return Set.of();
         }

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.example.hrmsystem.dto.DepartmentRequest;
 import org.example.hrmsystem.dto.DepartmentResponse;
 import org.example.hrmsystem.dto.EmployeeResponse;
+import org.example.hrmsystem.security.AppUserDetails;
 import org.example.hrmsystem.service.DepartmentService;
 import org.example.hrmsystem.service.EmployeeService;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -39,13 +41,14 @@ public class DepartmentController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "name,asc") String sort
+            @RequestParam(defaultValue = "name,asc") String sort,
+            @AuthenticationPrincipal AppUserDetails user
     ) {
         String[] sortParts = sort.split(",");
         Sort.Direction dir = sortParts.length > 1 && sortParts[1].equalsIgnoreCase("desc")
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sortParts[0]));
-        return ResponseEntity.ok(departmentService.findAll(keyword, pageable));
+        return ResponseEntity.ok(departmentService.findAllForActor(user, keyword, pageable));
     }
 
     /**
@@ -54,8 +57,11 @@ public class DepartmentController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
-    public ResponseEntity<DepartmentResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(departmentService.findById(id));
+    public ResponseEntity<DepartmentResponse> getById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUserDetails user
+    ) {
+        return ResponseEntity.ok(departmentService.findByIdForActor(id, user));
     }
 
     /**
@@ -68,9 +74,10 @@ public class DepartmentController {
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
-            @RequestParam(defaultValue = "fullName,asc") String sort
+            @RequestParam(defaultValue = "fullName,asc") String sort,
+            @AuthenticationPrincipal AppUserDetails user
     ) {
-        departmentService.findById(id);
+        departmentService.findByIdForActor(id, user);
         String[] sortParts = sort.split(",");
         Sort.Direction dir = sortParts.length > 1 && sortParts[1].equalsIgnoreCase("desc")
                 ? Sort.Direction.DESC : Sort.Direction.ASC;

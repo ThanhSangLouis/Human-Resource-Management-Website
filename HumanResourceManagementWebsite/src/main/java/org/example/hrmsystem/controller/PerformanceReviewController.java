@@ -32,20 +32,30 @@ public class PerformanceReviewController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer quarter,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal AppUserDetails user
     ) {
+        Role role = Role.valueOf(user.getRole());
+        Long actorKey = resolveActorEmployeeKey(user);
         Page<PerformanceReviewResponse> result = performanceReviewService.list(
                 year,
                 quarter,
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reviewYear", "reviewQuarter", "id"))
+                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "reviewYear", "reviewQuarter", "id")),
+                role,
+                actorKey
         );
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
-    public ResponseEntity<PerformanceReviewResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(performanceReviewService.getById(id));
+    public ResponseEntity<PerformanceReviewResponse> getById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUserDetails user
+    ) {
+        Role role = Role.valueOf(user.getRole());
+        Long actorKey = resolveActorEmployeeKey(user);
+        return ResponseEntity.ok(performanceReviewService.getById(id, role, actorKey));
     }
 
     @PostMapping

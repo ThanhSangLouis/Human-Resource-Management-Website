@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
@@ -57,4 +58,34 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
             @Param("departmentId") Long departmentId,
             Pageable pageable
     );
+
+    @Query("""
+            SELECT e FROM Employee e
+            WHERE
+              (:keyword IS NULL OR :keyword = '' OR
+               LOWER(e.fullName)     LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+               LOWER(e.email)        LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+               LOWER(e.employeeCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+               LOWER(e.phone)        LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+               LOWER(e.position)     LIKE LOWER(CONCAT('%', :keyword, '%')))
+            AND (:status IS NULL OR e.status = :status)
+            AND (:departmentId IS NULL OR e.departmentId = :departmentId)
+            AND e.departmentId IN :deptIds
+            """)
+    Page<Employee> searchInDepartments(
+            @Param("keyword") String keyword,
+            @Param("status") EmployeeStatus status,
+            @Param("departmentId") Long departmentId,
+            @Param("deptIds") Set<Long> deptIds,
+            Pageable pageable
+    );
+
+    @Query("SELECT COUNT(e) FROM Employee e WHERE e.id IN :ids")
+    long countByIdIn(@Param("ids") Collection<Long> ids);
+
+    @Query("SELECT e.status, COUNT(e) FROM Employee e WHERE e.id IN :ids GROUP BY e.status")
+    List<Object[]> countByStatusGroupedForIds(@Param("ids") Collection<Long> ids);
+
+    @Query("SELECT COUNT(e) FROM Employee e WHERE e.departmentId = :deptId AND e.id IN :empIds")
+    long countByDepartmentIdAndIdIn(@Param("deptId") Long deptId, @Param("empIds") Collection<Long> empIds);
 }

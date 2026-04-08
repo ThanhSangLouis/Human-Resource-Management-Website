@@ -9,6 +9,8 @@ import org.example.hrmsystem.repository.DepartmentRepository;
 import org.example.hrmsystem.repository.EmployeeRepository;
 import org.example.hrmsystem.repository.UserAccountRepository;
 import org.example.hrmsystem.security.AppUserDetails;
+import java.util.Set;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -54,6 +56,39 @@ public class EmployeeService {
         String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
         return employeeRepository.search(kw, status, departmentId, pageable)
                 .map(this::toResponse);
+    }
+
+    /**
+     * ADMIN/HR: toàn bộ. MANAGER: chỉ nhân viên thuộc phòng ban trong phạm vi quản lý.
+     */
+    public Page<EmployeeResponse> findAllForActor(AppUserDetails actor,
+                                                  String keyword,
+                                                  String statusStr,
+                                                  Long departmentId,
+                                                  Pageable pageable) {
+        Role role = Role.valueOf(actor.getRole());
+        if (role == Role.ADMIN || role == Role.HR) {
+            return findAll(keyword, statusStr, departmentId, pageable);
+        }
+        if (role == Role.MANAGER) {
+            Long actorKey = resolveActorEmployeeKey(actor);
+            Set<Long> deptIds = managerEmployeeScopeService.managedDepartmentIds(actorKey);
+            if (deptIds.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            if (departmentId != null && !deptIds.contains(departmentId)) {
+                throw new AccessDeniedException("Bạn không quản lý phòng ban này");
+            }
+            EmployeeStatus status = null;
+            if (statusStr != null && !statusStr.isBlank()) {
+                try { status = EmployeeStatus.valueOf(statusStr.toUpperCase()); }
+                catch (IllegalArgumentException ignored) {}
+            }
+            String kw = (keyword != null && !keyword.isBlank()) ? keyword.trim() : null;
+            return employeeRepository.searchInDepartments(kw, status, departmentId, deptIds, pageable)
+                    .map(this::toResponse);
+        }
+        throw new AccessDeniedException("Không có quyền xem danh sách nhân viên");
     }
 
     // ── Read One ─────────────────────────────────────────────────────────────
