@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRM Redirect</title>
+</head>
+<body>
+<script>
+    (function () {
+        const TOKEN_KEY = "hrm_access_token";
+        const USER_KEY = "hrm_user";
+
+        function getUser() {
+            try {
+                return JSON.parse(localStorage.getItem(USER_KEY) || "null");
+            } catch (_) {
+                return null;
+            }
+        }
+
+        const token = localStorage.getItem(TOKEN_KEY);
+        const user = getUser();
+        const role = String((user && user.role) || "").trim().toUpperCase();
+
+        if (!token) {
+            window.location.replace("/login");
+            return;
+        }
+
+        if (role === "EMPLOYEE") {
+            window.location.replace("/worktime.html#attendance");
+            return;
+        }
+
+        window.location.replace("/overview");
+    }());
+</script>
+</body>
+</html>

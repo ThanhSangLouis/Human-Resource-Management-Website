@@ -229,6 +229,27 @@
           <div class="wt-pg" id="wt-lv-pending-pg"></div>
         </div>
       </div>
+      <div id="wt-leave-approved" class="card" style="margin-top:20px;">
+        <div class="card-body" style="padding-top:20px;">
+          <div class="page-title" style="margin-bottom:14px;text-transform:none;font-size:15px;color:#1a2035;">Đơn nghỉ phép đã duyệt</div>
+          <div class="wt-filter">
+            <div class="fg"><label for="wt-appr-filterDate">Một ngày (tuỳ chọn)</label><input type="date" id="wt-appr-filterDate" /></div>
+            <div class="fg"><label for="wt-appr-filterMonth">Tháng</label><input type="month" id="wt-appr-filterMonth" /></div>
+            <div class="fg" id="wt-appr-dept-wrap" style="display:none;"><label for="wt-appr-filterDept">Phòng ban</label>
+              <select id="wt-appr-filterDept" style="min-width:180px;"><option value="">Tất cả phòng ban</option></select>
+            </div>
+            <button type="button" class="btn-primary" onclick="loadApprovedLeaves(0)">Tìm kiếm</button>
+          </div>
+          <div id="wt-appr-summary" style="font-size:12px;color:#8a94a6;margin-bottom:8px;"></div>
+          <div class="card" style="box-shadow:none;border:1px solid #e5e9f2;">
+            <table>
+              <thead id="wt-appr-thead"><tr></tr></thead>
+              <tbody id="wt-appr-tbody"><tr class="wt-empty"><td colspan="7">Chọn tháng và nhấn Tìm kiếm</td></tr></tbody>
+            </table>
+          </div>
+          <div class="wt-pg" id="wt-appr-pg"></div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -365,6 +386,14 @@ function fmtDateVi(iso) {
   return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
 }
 
+function fmtDateTimeVi(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear() + ' ' +
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
 function renderAttStatus(data) {
   const s = data.status;
   let cls = 'none', txt = 'Chưa có dữ liệu';
@@ -488,6 +517,8 @@ async function loadHistory(page) {
 const LV_TYPE = { ANNUAL:'Phép năm', SICK:'Ốm', MATERNITY:'Thai sản', UNPAID:'Không lương', OTHER:'Khác' };
 let leaveInited = false;
 let wtPendingLastPage = 0;
+let wtApprLastPage = 0;
+let wtApprInited = false;
 function canReviewLeaves() {
   return currentRole === 'ADMIN' || currentRole === 'HR' || currentRole === 'MANAGER';
 }
@@ -495,7 +526,11 @@ function initLeavePanel() {
   const rev = document.getElementById('wt-leave-review');
   if (canReviewLeaves()) { rev.style.display = 'block'; loadPendingLeaves(0); }
   else { rev.style.display = 'none'; }
-  if (leaveInited) { loadLeaves(0); return; }
+  if (leaveInited) {
+    loadLeaves(0);
+    initApprovedLeaveSection();
+    return;
+  }
   leaveInited = true;
   const t = new Date().toISOString().split('T')[0];
   document.getElementById('wt-lv-start').min = t;
@@ -508,6 +543,101 @@ function initLeavePanel() {
   document.getElementById('wt-lv-end').addEventListener('change', updLvDays);
   document.getElementById('wt-lv-submit').onclick = submitLeave;
   loadLeaves(0);
+  initApprovedLeaveSection();
+}
+
+function initApprovedLeaveSection() {
+  const showDept = currentRole === 'ADMIN' || currentRole === 'HR';
+  const wrap = document.getElementById('wt-appr-dept-wrap');
+  if (wrap) wrap.style.display = showDept ? 'flex' : 'none';
+  if (showDept && !window._wtApprDeptLoaded) {
+    window._wtApprDeptLoaded = true;
+    loadDeptOptionsForApproved();
+  }
+  if (!wtApprInited) {
+    wtApprInited = true;
+    const mon = document.getElementById('wt-appr-filterMonth');
+    const n = new Date();
+    if (mon && !mon.value) mon.value = n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0');
+  }
+  loadApprovedLeaves(0);
+}
+
+async function loadDeptOptionsForApproved() {
+  const sel = document.getElementById('wt-appr-filterDept');
+  if (!sel) return;
+  const { ok, data } = await apiFetch('/departments?page=0&size=100&sort=name,asc');
+  if (!ok || !data.content) return;
+  sel.innerHTML = '<option value="">Tất cả phòng ban</option>';
+  data.content.forEach(function (d) {
+    const o = document.createElement('option');
+    o.value = d.id;
+    o.textContent = d.name;
+    sel.appendChild(o);
+  });
+}
+
+async function loadApprovedLeaves(page) {
+  wtApprLastPage = page;
+  const d = document.getElementById('wt-appr-filterDate').value;
+  const m = document.getElementById('wt-appr-filterMonth').value;
+  let url = '/leave/approved?page=' + page + '&size=20';
+  if (d) url += '&date=' + encodeURIComponent(d);
+  else if (m) url += '&month=' + encodeURIComponent(m);
+  if (currentRole === 'ADMIN' || currentRole === 'HR') {
+    const dept = document.getElementById('wt-appr-filterDept').value;
+    if (dept) url += '&departmentId=' + encodeURIComponent(dept);
+  }
+  const emp = currentRole === 'EMPLOYEE';
+  const colSpan = emp ? 6 : 7;
+  document.getElementById('wt-appr-thead').innerHTML = '<tr>' + (emp ? '' : '<th>Nhân viên</th>') + '<th>Loại</th><th>Từ</th><th>Đến</th><th>Số ngày</th><th>Duyệt lúc</th><th>Lý do</th></tr>';
+  document.getElementById('wt-appr-tbody').innerHTML = '<tr class="wt-empty"><td colspan="' + colSpan + '">Đang tải...</td></tr>';
+  const { ok, data } = await apiFetch(url);
+  if (!ok) {
+    document.getElementById('wt-appr-tbody').innerHTML = '<tr class="wt-empty"><td colspan="' + colSpan + '">' + (data.message || 'Lỗi tải') + '</td></tr>';
+    document.getElementById('wt-appr-summary').textContent = '';
+    document.getElementById('wt-appr-pg').innerHTML = '';
+    return;
+  }
+  const rows = data.content || [];
+  document.getElementById('wt-appr-summary').textContent = 'Hiển thị ' + rows.length + ' / ' + (data.totalElements||0) + ' đơn — ' + (data.period || data.month || '');
+  if (!rows.length) {
+    document.getElementById('wt-appr-tbody').innerHTML = '<tr class="wt-empty"><td colspan="' + colSpan + '">Không có dữ liệu</td></tr>';
+    document.getElementById('wt-appr-pg').innerHTML = '';
+    return;
+  }
+  document.getElementById('wt-appr-tbody').innerHTML = rows.map(function (lr) {
+    const rs = (lr.reason || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    const rCell = lr.reason ? rs : '—';
+    return '<tr>' +
+      (emp ? '' : '<td>' + (lr.employeeName || '—') + '</td>') +
+      '<td>' + (LV_TYPE[lr.leaveType]||lr.leaveType) + '</td>' +
+      '<td>' + fmtDateVi(lr.startDate) + '</td>' +
+      '<td>' + fmtDateVi(lr.endDate) + '</td>' +
+      '<td>' + lr.totalDays + '</td>' +
+      '<td>' + fmtDateTimeVi(lr.approvedAt) + '</td>' +
+      '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis" title="' + rs + '">' + rCell + '</td></tr>';
+  }).join('');
+  const tp = data.totalPages || 0, p = data.page || 0;
+  const pg = document.getElementById('wt-appr-pg');
+  pg.innerHTML = '';
+  if (tp <= 1) return;
+  const prev = document.createElement('button');
+  prev.textContent = '← Trước';
+  prev.disabled = p === 0;
+  prev.onclick = function () { loadApprovedLeaves(p - 1); };
+  pg.appendChild(prev);
+  const mid = document.createElement('span');
+  mid.style.margin = '0 8px';
+  mid.style.fontSize = '13px';
+  mid.style.color = '#5a6a85';
+  mid.textContent = (p+1) + ' / ' + tp;
+  pg.appendChild(mid);
+  const next = document.createElement('button');
+  next.textContent = 'Sau →';
+  next.disabled = p >= tp - 1;
+  next.onclick = function () { loadApprovedLeaves(p + 1); };
+  pg.appendChild(next);
 }
 async function loadPendingLeaves(page) {
   if (!canReviewLeaves()) return;
@@ -552,6 +682,7 @@ async function reviewLeave(id, approve) {
   if (!ok) { toast(data.message || 'Thao tác thất bại', true); return; }
   toast(data.message || (approve ? 'Đã duyệt' : 'Đã từ chối'));
   loadPendingLeaves(wtPendingLastPage);
+  if (approve) loadApprovedLeaves(0);
 }
 function updLvDays() {
   const s = document.getElementById('wt-lv-start').value, e = document.getElementById('wt-lv-end').value;
@@ -623,6 +754,7 @@ async function submitLeave() {
   document.getElementById('wt-lv-days').textContent = '';
   loadLeaves(0);
   if (canReviewLeaves()) loadPendingLeaves(wtPendingLastPage);
+  loadApprovedLeaves(wtApprLastPage);
 }
 
 document.addEventListener('hrm:frags-ready', function () {

@@ -8,8 +8,10 @@ import org.example.hrmsystem.model.*;
 import org.example.hrmsystem.repository.DepartmentRepository;
 import org.example.hrmsystem.repository.EmployeeRepository;
 import org.example.hrmsystem.repository.UserAccountRepository;
+import org.example.hrmsystem.security.AppUserDetails;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,15 +25,18 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final UserAccountRepository userAccountRepository;
+    private final ManagerEmployeeScopeService managerEmployeeScopeService;
     private final PasswordEncoder passwordEncoder;
 
     public EmployeeService(EmployeeRepository employeeRepository,
                            DepartmentRepository departmentRepository,
                            UserAccountRepository userAccountRepository,
+                           ManagerEmployeeScopeService managerEmployeeScopeService,
                            PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.userAccountRepository = userAccountRepository;
+        this.managerEmployeeScopeService = managerEmployeeScopeService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -56,6 +61,47 @@ public class EmployeeService {
     public EmployeeResponse findById(Long id) {
         Employee emp = getOrThrow(id);
         return toResponse(emp);
+    }
+
+    /**
+     * EMPLOYEE: chỉ hồ sơ của chính mình (khóa employeeId hoặc userId fallback).
+     * MANAGER: nhân viên thuộc phạm vi quản lý.
+     * ADMIN / HR: mọi id.
+     */
+    public EmployeeResponse getByIdForActor(Long id, AppUserDetails actor) {
+        Role role = Role.valueOf(actor.getRole());
+        if (role == Role.ADMIN || role == Role.HR) {
+            return findById(id);
+        }
+        Long actorKey = resolveActorEmployeeKey(actor);
+        if (role == Role.EMPLOYEE) {
+            if (!id.equals(actorKey)) {
+                throw new AccessDeniedException("Bạn chỉ được xem hồ sơ của chính mình");
+            }
+            return findById(id);
+        }
+        if (role == Role.MANAGER) {
+            if (!managerEmployeeScopeService.managesEmployee(actorKey, id)) {
+                throw new AccessDeniedException("Bạn chỉ được xem nhân viên thuộc phòng ban quản lý");
+            }
+            return findById(id);
+        }
+        throw new AccessDeniedException("Không có quyền xem hồ sơ nhân viên");
+    }
+
+    /** EMPLOYEE chỉ được cập nhật avatar của chính mình (khóa giống chấm công). */
+    public void assertEmployeeAvatarSelfOnly(AppUserDetails actor, Long employeeId) {
+        if (Role.valueOf(actor.getRole()) != Role.EMPLOYEE) {
+            return;
+        }
+        if (!employeeId.equals(resolveActorEmployeeKey(actor))) {
+            throw new AccessDeniedException("Bạn chỉ được đổi ảnh đại diện của chính mình");
+        }
+    }
+
+    private static Long resolveActorEmployeeKey(AppUserDetails user) {
+        Long eid = user.getEmployeeId();
+        return eid != null ? eid : user.getUserId();
     }
 
     // ── Create ───────────────────────────────────────────────────────────────

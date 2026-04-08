@@ -674,6 +674,11 @@
   // ── Auth ─────────────────────────────────────────────────────────────────
   function init() {
     if (!token) { window.location.href = '/login'; return; }
+    const r = currentUser && String(currentUser.role || '').toUpperCase();
+    if (r !== 'ADMIN' && r !== 'HR') {
+      window.location.replace(r === 'EMPLOYEE' ? '/worktime.html#attendance' : '/overview');
+      return;
+    }
     renderUser();
     loadDepartments();
   }

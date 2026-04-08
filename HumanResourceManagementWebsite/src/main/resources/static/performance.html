@@ -473,7 +473,7 @@ async function editRow(id) {
 function boot() {
   if (!token) { window.location.href = '/login'; return; }
   if (!canAccess()) {
-    document.getElementById('gate-msg').style.display = 'block';
+    window.location.replace('/worktime.html#attendance');
     return;
   }
   document.getElementById('perf-tools').style.display = 'block';

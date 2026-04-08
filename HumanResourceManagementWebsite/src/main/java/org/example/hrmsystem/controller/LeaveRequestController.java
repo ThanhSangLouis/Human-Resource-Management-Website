@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.format.DateTimeParseException;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Map;
 
 @RestController
@@ -52,6 +55,41 @@ public class LeaveRequestController {
     ) {
         Long employeeId = resolveEmployeeId(userDetails);
         return ResponseEntity.ok(leaveRequestService.getMyLeaves(employeeId, page, size));
+    }
+
+    /**
+     * Đơn nghỉ APPROVED giao với tháng/ngày — phạm vi theo role (giống lịch sử chấm công).
+     * {@code departmentId}: chỉ ADMIN/HR.
+     */
+    @GetMapping("/approved")
+    public ResponseEntity<?> listApproved(
+            @AuthenticationPrincipal AppUserDetails userDetails,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) Long departmentId
+    ) {
+        if (date != null && !date.isBlank()) {
+            try {
+                LocalDate.parse(date.trim());
+            } catch (DateTimeParseException ex) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid date (use yyyy-MM-dd)"));
+            }
+        }
+        if (month != null && !month.isBlank()) {
+            try {
+                YearMonth.parse(month.trim());
+            } catch (DateTimeParseException ex) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid month (use yyyy-MM)"));
+            }
+        }
+        try {
+            return ResponseEntity.ok(leaveRequestService.listApprovedLeaves(
+                    userDetails, page, size, month, date, departmentId));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
     }
 
     @GetMapping("/pending")

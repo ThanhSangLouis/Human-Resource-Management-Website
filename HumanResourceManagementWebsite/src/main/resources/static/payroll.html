@@ -172,7 +172,8 @@ function canAccessPayroll() {
 function init() {
   if (!token) { window.location.href = '/login'; return; }
   if (!canAccessPayroll()) {
-    document.getElementById('gate-msg').style.display = 'block';
+    const r = currentUser && String(currentUser.role || '').toUpperCase();
+    window.location.replace(r === 'EMPLOYEE' ? '/worktime.html#attendance' : '/overview');
     return;
   }
   document.getElementById('payroll-tools').style.display = 'block';

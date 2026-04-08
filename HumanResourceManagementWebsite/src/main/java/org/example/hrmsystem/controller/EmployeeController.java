@@ -3,6 +3,7 @@ package org.example.hrmsystem.controller;
 import jakarta.validation.Valid;
 import org.example.hrmsystem.dto.EmployeeRequest;
 import org.example.hrmsystem.dto.EmployeeResponse;
+import org.example.hrmsystem.security.AppUserDetails;
 import org.example.hrmsystem.service.AvatarService;
 import org.example.hrmsystem.service.EmployeeService;
 import org.example.hrmsystem.service.ExcelExportService;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -90,12 +92,15 @@ public class EmployeeController {
 
     /**
      * GET /api/employees/{id}
-     * Roles: ADMIN, HR, MANAGER, EMPLOYEE
+     * EMPLOYEE: chỉ bản thân; MANAGER: NV thuộc phạm vi; ADMIN/HR: mọi người.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<EmployeeResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(employeeService.findById(id));
+    @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER','EMPLOYEE')")
+    public ResponseEntity<EmployeeResponse> getById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUserDetails user
+    ) {
+        return ResponseEntity.ok(employeeService.getByIdForActor(id, user));
     }
 
     /**
@@ -140,9 +145,11 @@ public class EmployeeController {
     @PreAuthorize("hasAnyRole('ADMIN','HR','EMPLOYEE')")
     public ResponseEntity<Map<String, String>> uploadAvatar(
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal AppUserDetails user
     ) {
         try {
+            employeeService.assertEmployeeAvatarSelfOnly(user, id);
             String avatarUrl = avatarService.uploadAvatar(id, file);
             return ResponseEntity.ok(Map.of("avatarUrl", avatarUrl));
         } catch (IllegalArgumentException ex) {

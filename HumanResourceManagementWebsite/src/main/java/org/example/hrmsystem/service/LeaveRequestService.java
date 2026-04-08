@@ -23,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -108,8 +110,6 @@ public class LeaveRequestService {
         Page<LeaveRequest> pageResult = leaveRequestRepository
             .findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable);
 
-        String employeeName = resolveEmployeeName(employeeId);
-
         List<LeaveRequestResponse> content = pageResult.getContent().stream()
             .map(lr -> toResponse(lr, resolveEmployeeName(lr.getEmployeeId()), null))
             .toList();
@@ -160,6 +160,90 @@ public class LeaveRequestService {
         out.put("totalElements", pageResult.getTotalElements());
         out.put("totalPages", pageResult.getTotalPages());
         out.put("last", pageResult.isLast());
+        return out;
+    }
+
+    /**
+     * Đơn APPROVED giao với khoảng tháng/ngày — phạm vi giống lịch sử chấm công.
+     * {@code departmentId} chỉ ADMIN/HR.
+     */
+    public Map<String, Object> listApprovedLeaves(
+            AppUserDetails user,
+            int page,
+            int size,
+            String monthParam,
+            String dateParam,
+            Long departmentId
+    ) {
+        LocalDate rangeStart;
+        LocalDate rangeEnd;
+        YearMonth ym;
+        if (dateParam != null && !dateParam.isBlank()) {
+            LocalDate single = LocalDate.parse(dateParam.trim());
+            rangeStart = single;
+            rangeEnd = single;
+            ym = YearMonth.from(single);
+        } else {
+            ym = (monthParam == null || monthParam.isBlank())
+                    ? YearMonth.now()
+                    : YearMonth.parse(monthParam.trim());
+            rangeStart = ym.atDay(1);
+            rangeEnd = ym.atEndOfMonth();
+        }
+        String periodLabel = (dateParam != null && !dateParam.isBlank())
+                ? rangeStart.toString()
+                : ym.toString();
+
+        Role role = Role.valueOf(user.getRole());
+        if (departmentId != null && role != Role.ADMIN && role != Role.HR) {
+            throw new IllegalArgumentException("departmentId chỉ dùng cho Admin hoặc HR");
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Long actorKey = resolveActorEmployeeKey(user);
+        Page<LeaveRequest> pageResult;
+
+        switch (role) {
+            case EMPLOYEE -> {
+                if (actorKey == null) {
+                    pageResult = Page.empty(pageable);
+                } else {
+                    pageResult = leaveRequestRepository.findApprovedOverlappingForEmployee(
+                            LeaveStatus.APPROVED, actorKey, rangeStart, rangeEnd, pageable);
+                }
+            }
+            case MANAGER -> {
+                Set<Long> visible = managerEmployeeScopeService.visibleEmployeeIdsForManager(actorKey);
+                if (visible.isEmpty()) {
+                    pageResult = Page.empty(pageable);
+                } else {
+                    pageResult = leaveRequestRepository.findApprovedOverlappingForEmployeeIds(
+                            LeaveStatus.APPROVED, visible, rangeStart, rangeEnd, pageable);
+                }
+            }
+            case ADMIN, HR -> {
+                if (departmentId != null) {
+                    pageResult = leaveRequestRepository.findApprovedOverlappingForDepartment(
+                            LeaveStatus.APPROVED, departmentId, rangeStart, rangeEnd, pageable);
+                } else {
+                    pageResult = leaveRequestRepository.findApprovedOverlappingAll(
+                            LeaveStatus.APPROVED, rangeStart, rangeEnd, pageable);
+                }
+            }
+            default -> throw new AccessDeniedException("Không có quyền xem danh sách nghỉ phép đã duyệt");
+        }
+
+        List<LeaveRequestResponse> content = pageResult.getContent().stream()
+                .map(lr -> toResponse(lr, resolveEmployeeName(lr.getEmployeeId()), null))
+                .toList();
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("content", content);
+        out.put("totalElements", pageResult.getTotalElements());
+        out.put("totalPages", pageResult.getTotalPages());
+        out.put("page", pageResult.getNumber());
+        out.put("month", ym.toString());
+        out.put("period", periodLabel);
         return out;
     }
 

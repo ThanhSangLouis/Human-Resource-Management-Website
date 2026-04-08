@@ -5,6 +5,8 @@ import org.example.hrmsystem.model.LeaveStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -42,5 +44,67 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             LeaveStatus status,
             LocalDate endBound,
             LocalDate startBound
+    );
+
+    @Query("""
+            SELECT lr FROM LeaveRequest lr
+            WHERE lr.status = :approved
+            AND lr.startDate <= :rangeEnd
+            AND lr.endDate >= :rangeStart
+            AND lr.employeeId = :employeeId
+            ORDER BY lr.createdAt DESC
+            """)
+    Page<LeaveRequest> findApprovedOverlappingForEmployee(
+            @Param("approved") LeaveStatus approved,
+            @Param("employeeId") Long employeeId,
+            @Param("rangeStart") LocalDate rangeStart,
+            @Param("rangeEnd") LocalDate rangeEnd,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT lr FROM LeaveRequest lr
+            WHERE lr.status = :approved
+            AND lr.startDate <= :rangeEnd
+            AND lr.endDate >= :rangeStart
+            AND lr.employeeId IN :employeeIds
+            ORDER BY lr.createdAt DESC
+            """)
+    Page<LeaveRequest> findApprovedOverlappingForEmployeeIds(
+            @Param("approved") LeaveStatus approved,
+            @Param("employeeIds") Collection<Long> employeeIds,
+            @Param("rangeStart") LocalDate rangeStart,
+            @Param("rangeEnd") LocalDate rangeEnd,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT lr FROM LeaveRequest lr
+            WHERE lr.status = :approved
+            AND lr.startDate <= :rangeEnd
+            AND lr.endDate >= :rangeStart
+            ORDER BY lr.createdAt DESC
+            """)
+    Page<LeaveRequest> findApprovedOverlappingAll(
+            @Param("approved") LeaveStatus approved,
+            @Param("rangeStart") LocalDate rangeStart,
+            @Param("rangeEnd") LocalDate rangeEnd,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT lr FROM LeaveRequest lr
+            WHERE lr.status = :approved
+            AND lr.startDate <= :rangeEnd
+            AND lr.endDate >= :rangeStart
+            AND lr.employeeId IN (SELECT e.id FROM Employee e WHERE e.departmentId = :deptId)
+            ORDER BY lr.createdAt DESC
+            """)
+    Page<LeaveRequest> findApprovedOverlappingForDepartment(
+            @Param("approved") LeaveStatus approved,
+            @Param("deptId") Long deptId,
+            @Param("rangeStart") LocalDate rangeStart,
+            @Param("rangeEnd") LocalDate rangeEnd,
+            Pageable pageable
     );
 }

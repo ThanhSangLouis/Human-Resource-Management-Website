@@ -425,6 +425,11 @@ document.addEventListener('hrm:frags-ready', function (e) {
 
   if (!user || !getToken()) { redirectLogin(); return; }
 
+  if (String(role || '').toUpperCase() === 'EMPLOYEE') {
+    window.location.replace('/worktime.html#attendance');
+    return;
+  }
+
   currentRole = role;
 
   const now = new Date();

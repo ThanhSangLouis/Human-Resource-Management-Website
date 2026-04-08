@@ -388,6 +388,11 @@ let departments = [];
 // ── Auth ─────────────────────────────────────────────────────────────────
 function init() {
   if (!token) { window.location.href = '/login'; return; }
+  const r = currentUser && String(currentUser.role || '').toUpperCase();
+  if (r !== 'ADMIN' && r !== 'HR' && r !== 'MANAGER') {
+    window.location.replace('/worktime.html#attendance');
+    return;
+  }
   renderUser();
   if (currentUser && currentUser.role === 'MANAGER') {
     document.getElementById('btn-export')?.style.setProperty('display', 'none');

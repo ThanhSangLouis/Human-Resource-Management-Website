@@ -21,10 +21,10 @@ public class DashboardController {
 
     /**
      * GET /api/dashboard?month=2026-03
-     * Mọi role đã đăng nhập (kể cả EMPLOYEE) — trang Tổng quan sau login.
+     * Thống kê toàn hệ thống — ADMIN, HR, MANAGER.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER','EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
     public ResponseEntity<DashboardStatsResponse> stats(
             @RequestParam(required = false) String month
     ) {
