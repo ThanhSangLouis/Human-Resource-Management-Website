@@ -64,6 +64,7 @@
     if (path === '/overview' || path === '/overview.html' ||
         path === '/dashboard' || path === '/dashboard.html') return 'overview';
     if (path.includes('employees'))   return 'employees';
+    if (path.includes('admin-users')) return 'admin-users';
     if (path.includes('departments')) return 'departments';
     if (path.includes('payroll'))     return 'payroll';
     if (path.includes('performance')) return 'performance';
@@ -173,6 +174,10 @@
     }
     if ((p.indexOf('departments') >= 0 || p.indexOf('employees') >= 0 || p.indexOf('performance') >= 0)
         && ['ADMIN', 'HR', 'MANAGER'].indexOf(roleUpper) < 0) {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    if (p.indexOf('admin-users') >= 0 && roleUpper !== 'ADMIN') {
       window.location.replace('/worktime.html#attendance');
       return false;
     }

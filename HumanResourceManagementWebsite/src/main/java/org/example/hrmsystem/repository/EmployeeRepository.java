@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -30,6 +31,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     boolean existsByEmployeeCode(String employeeCode);
     boolean existsByEmployeeCodeAndIdNot(String employeeCode, Long id);
+    Optional<Employee> findByEmployeeCode(String employeeCode);
 
     boolean existsByEmail(String email);
     boolean existsByEmailAndIdNot(String email, Long id);
