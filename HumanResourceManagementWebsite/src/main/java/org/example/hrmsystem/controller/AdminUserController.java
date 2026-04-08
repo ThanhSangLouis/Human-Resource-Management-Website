@@ -1,16 +1,23 @@
 package org.example.hrmsystem.controller;
 
+import org.example.hrmsystem.dto.EmployeeRequest;
+import org.example.hrmsystem.dto.EmployeeResponse;
 import org.example.hrmsystem.exception.DuplicateResourceException;
 import org.example.hrmsystem.exception.ResourceNotFoundException;
+import org.example.hrmsystem.model.Role;
 import org.example.hrmsystem.model.UserAccount;
+import org.example.hrmsystem.repository.EmployeeRepository;
 import org.example.hrmsystem.repository.UserAccountRepository;
+import org.example.hrmsystem.service.EmployeeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -19,11 +26,17 @@ import java.util.stream.Collectors;
 public class AdminUserController {
 
     private final UserAccountRepository userAccountRepository;
+    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
     private final PasswordEncoder passwordEncoder;
 
     public AdminUserController(UserAccountRepository userAccountRepository,
+                               EmployeeRepository employeeRepository,
+                               EmployeeService employeeService,
                                PasswordEncoder passwordEncoder) {
         this.userAccountRepository = userAccountRepository;
+        this.employeeRepository = employeeRepository;
+        this.employeeService = employeeService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -46,6 +59,166 @@ public class AdminUserController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/available-employees")
+    public ResponseEntity<List<Map<String, Object>>> availableEmployees() {
+        Set<Long> usedEmployeeIds = userAccountRepository.findAll().stream()
+                .map(UserAccount::getEmployeeId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        List<Map<String, Object>> result = employeeRepository.findAll().stream()
+                .filter(e -> e.getId() != null && !usedEmployeeIds.contains(e.getId()))
+                .map(e -> Map.<String, Object>of(
+                        "id", e.getId(),
+                        "employeeCode", e.getEmployeeCode() == null ? "" : e.getEmployeeCode(),
+                        "fullName", e.getFullName() == null ? "" : e.getFullName()
+                ))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/create-employee-account")
+    public ResponseEntity<Map<String, Object>> createEmployeeWithAccount(@RequestBody Map<String, Object> body) {
+        String fullName = String.valueOf(body.getOrDefault("fullName", "")).trim();
+        String email = String.valueOf(body.getOrDefault("email", "")).trim().toLowerCase();
+        String employeeCode = String.valueOf(body.getOrDefault("employeeCode", "")).trim();
+        String initialPassword = String.valueOf(body.getOrDefault("password", "")).trim();
+        String loginUsernameRaw = String.valueOf(body.getOrDefault("loginUsername", "")).trim().toLowerCase();
+        String roleRaw = String.valueOf(body.getOrDefault("role", "EMPLOYEE")).trim().toUpperCase();
+
+        if (fullName.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "fullName không được để trống."));
+        }
+        Role selectedRole;
+        try {
+            selectedRole = Role.valueOf(roleRaw);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Role không hợp lệ."));
+        }
+        if (employeeCode.isBlank()) {
+            employeeCode = "EMP-" + System.currentTimeMillis();
+        }
+
+        EmployeeRequest req = new EmployeeRequest();
+        req.setFullName(fullName);
+        req.setEmployeeCode(employeeCode);
+        req.setEmail(email.isBlank() ? null : email);
+        req.setStatus("ACTIVE");
+        if (!initialPassword.isBlank()) {
+            req.setInitialPassword(initialPassword);
+        }
+
+        EmployeeResponse created = employeeService.create(req);
+        UserAccount createdAccount = userAccountRepository.findByEmployeeId(created.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản vừa tạo cho nhân viên: id=" + created.getId()));
+        createdAccount.setRole(selectedRole);
+        if (!loginUsernameRaw.isBlank()
+                && !loginUsernameRaw.equals(createdAccount.getUsername())) {
+            if (userAccountRepository.existsByUsername(loginUsernameRaw)) {
+                throw new DuplicateResourceException("Username đăng nhập đã tồn tại: " + loginUsernameRaw);
+            }
+            createdAccount.setUsername(loginUsernameRaw);
+        }
+        createdAccount.touchUpdatedAt();
+        UserAccount saved = userAccountRepository.save(createdAccount);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Tạo nhân viên và tài khoản thành công",
+                "employeeId", created.getId(),
+                "employeeCode", created.getEmployeeCode(),
+                "username", saved.getUsername(),
+                "role", selectedRole.name()
+        ));
+    }
+
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> createUser(@RequestBody Map<String, Object> body) {
+        String username = String.valueOf(body.getOrDefault("username", "")).trim().toLowerCase();
+        String rawPassword = String.valueOf(body.getOrDefault("password", "")).trim();
+        String roleRaw = String.valueOf(body.getOrDefault("role", "EMPLOYEE")).trim().toUpperCase();
+
+        if (username.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Username không được để trống."));
+        }
+        if (rawPassword.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Mật khẩu phải có ít nhất 6 ký tự."));
+        }
+        if (userAccountRepository.existsByUsername(username)) {
+            throw new DuplicateResourceException("Username đã tồn tại: " + username);
+        }
+
+        org.example.hrmsystem.model.Role role;
+        try {
+            role = org.example.hrmsystem.model.Role.valueOf(roleRaw);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Role không hợp lệ."));
+        }
+
+        UserAccount account = new UserAccount();
+        account.setUsername(username);
+        account.setPassword(passwordEncoder.encode(rawPassword));
+        account.setRole(role);
+        account.setActive(true);
+
+        Object employeeIdObj = body.get("employeeId");
+        String employeeInput = employeeIdObj == null ? "" : String.valueOf(employeeIdObj).trim();
+        Long employeeId = null;
+        if (!employeeInput.isBlank()) {
+            try {
+                employeeId = Long.parseLong(employeeInput);
+                if (!employeeRepository.existsById(employeeId)) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "employeeId không tồn tại trong bảng nhân viên."));
+                }
+            } catch (NumberFormatException ex) {
+                employeeId = employeeRepository.findByEmployeeCode(employeeInput)
+                        .map(org.example.hrmsystem.model.Employee::getId)
+                        .orElse(null);
+                if (employeeId == null) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "employeeId/mã nhân viên không tồn tại."));
+                }
+            }
+        }
+        if (role == org.example.hrmsystem.model.Role.EMPLOYEE && employeeId == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản EMPLOYEE bắt buộc phải có employeeId hoặc mã nhân viên (chọn nhân viên chưa có tài khoản)."));
+        }
+        if (employeeId != null) {
+            if (userAccountRepository.findByEmployeeId(employeeId).isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "employeeId đã được gắn với tài khoản khác."));
+            }
+            account.setEmployeeId(employeeId);
+        }
+
+        account.touchUpdatedAt();
+        UserAccount saved = userAccountRepository.save(account);
+        return ResponseEntity.ok(Map.of(
+                "id", saved.getId(),
+                "username", saved.getUsername(),
+                "role", saved.getRole().name(),
+                "employeeId", saved.getEmployeeId() == null ? "" : saved.getEmployeeId(),
+                "isActive", saved.isActive()
+        ));
+    }
+
+    @PostMapping("/{id}/lock")
+    public ResponseEntity<Map<String, String>> lockUser(@PathVariable Long id) {
+        UserAccount account = userAccountRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại: id=" + id));
+        account.setActive(false);
+        account.touchUpdatedAt();
+        userAccountRepository.save(account);
+        return ResponseEntity.ok(Map.of("message", "Khóa tài khoản thành công!"));
+    }
+
+    @PostMapping("/{id}/unlock")
+    public ResponseEntity<Map<String, String>> unlockUser(@PathVariable Long id) {
+        UserAccount account = userAccountRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại: id=" + id));
+        account.setActive(true);
+        account.touchUpdatedAt();
+        userAccountRepository.save(account);
+        return ResponseEntity.ok(Map.of("message", "Mở khóa tài khoản thành công!"));
+    }
+
     /**
      * PUT /api/admin/users/{id}/password
      * Body: { "newPassword": "..." }
@@ -66,6 +239,7 @@ public class AdminUserController {
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại: id=" + id));
 
         account.setPassword(passwordEncoder.encode(newPassword));
+        account.touchUpdatedAt();
         userAccountRepository.save(account);
 
         return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công!"));
@@ -97,6 +271,7 @@ public class AdminUserController {
         }
 
         account.setUsername(newUsername);
+        account.touchUpdatedAt();
         userAccountRepository.save(account);
 
         return ResponseEntity.ok(Map.of(
@@ -133,6 +308,7 @@ public class AdminUserController {
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại: id=" + id));
 
         account.setRole(newRole);
+        account.touchUpdatedAt();
         userAccountRepository.save(account);
 
         return ResponseEntity.ok(Map.of(

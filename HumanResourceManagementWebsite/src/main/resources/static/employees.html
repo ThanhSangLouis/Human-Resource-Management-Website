@@ -601,6 +601,12 @@ async function submitForm() {
   let valid = true;
   if (!employeeCode) { document.getElementById('e-code').classList.add('show'); valid=false; }
   if (!fullName)     { document.getElementById('e-name').classList.add('show'); valid=false; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const eEmail = document.getElementById('e-email');
+    eEmail.textContent = 'Email không hợp lệ';
+    eEmail.classList.add('show');
+    valid = false;
+  }
   if (!valid) return;
 
   const pw = document.getElementById('f-password').value;
@@ -632,6 +638,26 @@ async function submitForm() {
       else if (msg.toLowerCase().includes('đăng nhập') || msg.toLowerCase().includes('tên đăng nhập')) {
         document.getElementById('e-password').textContent = msg;
         document.getElementById('e-password').classList.add('show');
+      }
+      return;
+    }
+    if (res.status === 400) {
+      const err = await res.json().catch(() => ({}));
+      const errors = err.errors || {};
+      if (errors.employeeCode) {
+        document.getElementById('e-code').textContent = errors.employeeCode;
+        document.getElementById('e-code').classList.add('show');
+      }
+      if (errors.fullName) {
+        document.getElementById('e-name').textContent = errors.fullName;
+        document.getElementById('e-name').classList.add('show');
+      }
+      if (errors.email) {
+        document.getElementById('e-email').textContent = errors.email;
+        document.getElementById('e-email').classList.add('show');
+      }
+      if (!errors.employeeCode && !errors.fullName && !errors.email) {
+        showToast(err.message || 'Dữ liệu không hợp lệ', 'error');
       }
       return;
     }
