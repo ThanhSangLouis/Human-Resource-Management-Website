@@ -522,6 +522,9 @@ let wtApprInited = false;
 function canReviewLeaves() {
   return currentRole === 'ADMIN' || currentRole === 'HR' || currentRole === 'MANAGER';
 }
+function canViewApprovedLeavesBoard() {
+  return currentRole === 'ADMIN' || currentRole === 'HR' || currentRole === 'MANAGER';
+}
 function initLeavePanel() {
   const rev = document.getElementById('wt-leave-review');
   if (canReviewLeaves()) { rev.style.display = 'block'; loadPendingLeaves(0); }
@@ -547,6 +550,12 @@ function initLeavePanel() {
 }
 
 function initApprovedLeaveSection() {
+  const card = document.getElementById('wt-leave-approved');
+  if (!canViewApprovedLeavesBoard()) {
+    if (card) card.style.display = 'none';
+    return;
+  }
+  if (card) card.style.display = '';
   const showDept = currentRole === 'ADMIN' || currentRole === 'HR';
   const wrap = document.getElementById('wt-appr-dept-wrap');
   if (wrap) wrap.style.display = showDept ? 'flex' : 'none';
@@ -578,6 +587,7 @@ async function loadDeptOptionsForApproved() {
 }
 
 async function loadApprovedLeaves(page) {
+  if (!canViewApprovedLeavesBoard()) return;
   wtApprLastPage = page;
   const d = document.getElementById('wt-appr-filterDate').value;
   const m = document.getElementById('wt-appr-filterMonth').value;
@@ -588,9 +598,8 @@ async function loadApprovedLeaves(page) {
     const dept = document.getElementById('wt-appr-filterDept').value;
     if (dept) url += '&departmentId=' + encodeURIComponent(dept);
   }
-  const emp = currentRole === 'EMPLOYEE';
-  const colSpan = emp ? 6 : 7;
-  document.getElementById('wt-appr-thead').innerHTML = '<tr>' + (emp ? '' : '<th>Nhân viên</th>') + '<th>Loại</th><th>Từ</th><th>Đến</th><th>Số ngày</th><th>Duyệt lúc</th><th>Lý do</th></tr>';
+  const colSpan = 7;
+  document.getElementById('wt-appr-thead').innerHTML = '<tr><th>Nhân viên</th><th>Loại</th><th>Từ</th><th>Đến</th><th>Số ngày</th><th>Duyệt lúc</th><th>Lý do</th></tr>';
   document.getElementById('wt-appr-tbody').innerHTML = '<tr class="wt-empty"><td colspan="' + colSpan + '">Đang tải...</td></tr>';
   const { ok, data } = await apiFetch(url);
   if (!ok) {
@@ -610,7 +619,7 @@ async function loadApprovedLeaves(page) {
     const rs = (lr.reason || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
     const rCell = lr.reason ? rs : '—';
     return '<tr>' +
-      (emp ? '' : '<td>' + (lr.employeeName || '—') + '</td>') +
+      '<td>' + (lr.employeeName || '—') + '</td>' +
       '<td>' + (LV_TYPE[lr.leaveType]||lr.leaveType) + '</td>' +
       '<td>' + fmtDateVi(lr.startDate) + '</td>' +
       '<td>' + fmtDateVi(lr.endDate) + '</td>' +
@@ -754,7 +763,7 @@ async function submitLeave() {
   document.getElementById('wt-lv-days').textContent = '';
   loadLeaves(0);
   if (canReviewLeaves()) loadPendingLeaves(wtPendingLastPage);
-  loadApprovedLeaves(wtApprLastPage);
+  if (canViewApprovedLeavesBoard()) loadApprovedLeaves(wtApprLastPage);
 }
 
 document.addEventListener('hrm:frags-ready', function () {

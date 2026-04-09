@@ -10,7 +10,7 @@ public class HomeController {
 
     @GetMapping("/")
     public String root() {
-        return "forward:/index.html";
+        return "redirect:/index.html";
     }
 
     @ResponseBody
