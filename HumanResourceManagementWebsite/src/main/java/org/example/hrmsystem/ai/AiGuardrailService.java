@@ -28,8 +28,8 @@ public class AiGuardrailService {
         if (text == null || text.isBlank()) {
             return "(Không có nội dung trả lời)";
         }
-        if (text.length() > 8000) {
-            return text.substring(0, 8000) + "\n…";
+        if (text.length() > 14000) {
+            return text.substring(0, 14000) + "\n…";
         }
         return text;
     }
