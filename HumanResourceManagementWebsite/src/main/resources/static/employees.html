@@ -44,9 +44,9 @@
     /* ── TOOLBAR ── */
     .toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
     .search-box { position:relative; flex:1; min-width:220px; max-width:320px; }
-    .search-box input { width:100%; padding:9px 12px 9px 36px; border:1px solid #dde2ee; border-radius:8px; font-size:13.5px; background:#fff; color:#1a2035; outline:none; transition:border-color .2s; }
+    .search-box input { width:100%; box-sizing:border-box; padding:9px 12px 9px 44px; border:1px solid #dde2ee; border-radius:8px; font-size:13.5px; background:#fff; color:#1a2035; outline:none; transition:border-color .2s; }
     .search-box input:focus { border-color:#2c3e8c; }
-    .search-box svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#8a94a6; }
+    .search-box svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; color:#8a94a6; }
     .filter-select { border:1px solid #dde2ee; border-radius:8px; padding:9px 12px; font-size:13.5px; color:#5a6a85; outline:none; background:#fff; cursor:pointer; font-family:inherit; }
     .filter-select:focus { border-color:#2c3e8c; }
     .btn-export { background:#fff; border:1.5px solid #22c55e; border-radius:8px; padding:9px 16px; font-size:13.5px; font-weight:600; color:#15803d; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all .15s; white-space:nowrap; }

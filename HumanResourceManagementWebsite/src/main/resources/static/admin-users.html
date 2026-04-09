@@ -14,9 +14,6 @@
     .topbar { background:#fff; border-bottom:1px solid #e5e9f2; padding:10px 32px; min-height:60px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 20px; position:sticky; top:0; z-index:100; box-shadow:0 1px 4px rgba(0,0,0,.06); }
     .topbar-logo { font-size:18px; font-weight:700; color:#2c3e8c; display:flex; align-items:center; gap:8px; }
     .topbar-logo span.dot { color:#f5a623; }
-    .topbar-nav { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; max-width:100%; }
-    .topbar-nav a { text-decoration:none; color:#5a6a85; font-size:14px; font-weight:500; padding:4px 0; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
-    .topbar-nav a.active, .topbar-nav a:hover { color:#2c3e8c; border-bottom-color:#2c3e8c; }
     .topbar-user { display:flex; align-items:center; gap:12px; font-size:14px; color:#5a6a85; flex-shrink:0; margin-left:auto; }
     .avatar-circle { width:36px; height:36px; border-radius:50%; background:#2c3e8c; color:#fff; font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center; }
     .btn-ghost { background:none; border:1px solid #dde2ee; border-radius:8px; padding:9px 18px; font-size:13.5px; font-weight:500; color:#5a6a85; cursor:pointer; transition:all .15s; }
@@ -72,9 +69,16 @@
 
     .toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
     .search-box { position:relative; flex:1; min-width:220px; max-width:320px; }
-    .search-box input { width:100%; padding:9px 12px 9px 36px; border:1px solid #dde2ee; border-radius:8px; font-size:13.5px; background:#fff; color:#1a2035; outline:none; transition:border-color .2s; }
+    .search-box input { width:100%; box-sizing:border-box; padding:9px 12px 9px 44px; border:1px solid #dde2ee; border-radius:8px; font-size:13.5px; background:#fff; color:#1a2035; outline:none; transition:border-color .2s; }
     .search-box input:focus { border-color:#2c3e8c; }
-    .search-box svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#8a94a6; }
+    .search-box svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; color:#8a94a6; }
+
+    .pagination-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:14px 16px; border-top:1px solid #e5e9f2; font-size:13px; color:#5a6a85; }
+    .pagination-btns { display:flex; gap:4px; flex-wrap:wrap; }
+    .pg-btn { border:1px solid #dde2ee; background:#fff; border-radius:6px; min-width:32px; height:32px; padding:0 8px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; color:#5a6a85; }
+    .pg-btn:hover:not(:disabled) { border-color:#2c3e8c; color:#2c3e8c; }
+    .pg-btn:disabled { opacity:.45; cursor:not-allowed; }
+    .pg-btn.active { background:#eef2ff; border-color:#2c3e8c; color:#2c3e8c; font-weight:600; }
 
     .card { background:#fff; border-radius:12px; border:1px solid #e5e9f2; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.04); }
     table { width:100%; border-collapse:collapse; }
@@ -160,7 +164,7 @@
       <div class="toolbar">
         <div class="search-box">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input id="q" placeholder="Tìm username..." />
+          <input type="text" id="q" placeholder="Tìm username..." autocomplete="off" />
         </div>
       </div>
 
@@ -180,6 +184,10 @@
             <tr><td colspan="6" class="empty">Đang tải dữ liệu...</td></tr>
           </tbody>
         </table>
+        <div class="pagination-row">
+          <span id="admin-pg-info">–</span>
+          <div class="pagination-btns" id="admin-pg-btns"></div>
+        </div>
       </div>
     </main>
   </div>
@@ -188,7 +196,9 @@
     const API = "/api/admin/users";
     const EMPLOYEE_ACCOUNT_API = "/api/admin/users/create-employee-account";
     const ROLE_OPTIONS = ["EMPLOYEE", "MANAGER", "HR", "ADMIN"];
+    const PAGE_SIZE = 10;
     let users = [];
+    let adminListPage = 0;
 
     function roleSelectOptions(currentRole) {
       const r = String(currentRole || "").toUpperCase();
@@ -221,10 +231,52 @@
       return res;
     }
 
+    function renderPagination(total, totalPages, page) {
+      const info = document.getElementById("admin-pg-info");
+      const btns = document.getElementById("admin-pg-btns");
+      if (!info || !btns) return;
+      if (total === 0) {
+        info.textContent = "Không có dữ liệu";
+        btns.innerHTML = "";
+        return;
+      }
+      const start = page * PAGE_SIZE + 1;
+      const end = Math.min((page + 1) * PAGE_SIZE, total);
+      info.textContent = `Hiển thị ${start}–${end} / ${total} tài khoản`;
+      let html = `<button type="button" class="pg-btn" ${page === 0 ? "disabled" : ""} onclick="goAdminPage(${page - 1})">‹</button>`;
+      for (let i = 0; i < totalPages; i++) {
+        html += `<button type="button" class="pg-btn ${i === page ? "active" : ""}" onclick="goAdminPage(${i})">${i + 1}</button>`;
+      }
+      html += `<button type="button" class="pg-btn" ${page >= totalPages - 1 ? "disabled" : ""} onclick="goAdminPage(${page + 1})">›</button>`;
+      btns.innerHTML = html;
+    }
+
+    function goAdminPage(p) {
+      const q = document.getElementById("q").value.trim().toLowerCase();
+      const filtered = users.filter(u => !q || String(u.username || "").toLowerCase().includes(q));
+      const totalPages = filtered.length === 0 ? 0 : Math.ceil(filtered.length / PAGE_SIZE);
+      if (totalPages === 0) {
+        adminListPage = 0;
+        render();
+        return;
+      }
+      if (p < 0 || p >= totalPages) return;
+      adminListPage = p;
+      render();
+    }
+
     function render() {
       const q = document.getElementById("q").value.trim().toLowerCase();
-      const list = users.filter(u => !q || String(u.username || "").toLowerCase().includes(q));
+      const filtered = users.filter(u => !q || String(u.username || "").toLowerCase().includes(q));
+      const total = filtered.length;
+      const totalPages = total === 0 ? 0 : Math.ceil(total / PAGE_SIZE);
+      if (adminListPage > 0 && adminListPage >= totalPages) {
+        adminListPage = Math.max(0, totalPages - 1);
+      }
+      const page = totalPages === 0 ? 0 : adminListPage;
+      const list = totalPages === 0 ? [] : filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
       const tbody = document.getElementById("tbody");
+      renderPagination(total, totalPages, page);
       if (!list.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="empty">Không có dữ liệu</td></tr>';
         return;
@@ -260,6 +312,7 @@
       const res = await api(API);
       if (!res.ok) throw new Error("Không tải được danh sách user");
       users = await res.json();
+      adminListPage = 0;
       render();
     }
 
@@ -370,7 +423,10 @@
         .replace(/>/g, "&gt;");
     }
 
-    document.getElementById("q").addEventListener("input", render);
+    document.getElementById("q").addEventListener("input", function () {
+      adminListPage = 0;
+      render();
+    });
 
     (async function init() {
       if (!token()) { window.location.href = "/login"; return; }

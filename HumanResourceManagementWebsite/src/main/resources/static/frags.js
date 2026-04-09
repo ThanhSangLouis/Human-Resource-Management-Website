@@ -92,35 +92,6 @@
       return;
     }
 
-    const path = window.location.pathname;
-    const hash = window.location.hash;
-    const currentNav = resolveCurrentNav();
-
-    function roleAllowedTop(allowedAttr, userRole) {
-      if (!allowedAttr || !String(allowedAttr).trim()) return true;
-      if (!userRole) return false;
-      const list = String(allowedAttr).split(',').map(function (r) { return normalizeRole(r); });
-      return list.indexOf(userRole) >= 0;
-    }
-
-    el.querySelectorAll('.topbar-nav a').forEach(function (a) {
-      if (a.dataset.nav) {
-        if (a.dataset.nav === currentNav) a.classList.add('active');
-        var allowed = a.getAttribute('data-roles');
-        if (allowed && !roleAllowedTop(allowed, role)) {
-          a.remove();
-        }
-      } else {
-        var h = a.getAttribute('href');
-        if (h === '/overview' && (path === '/overview' || path === '/overview.html')) {
-          a.classList.add('active');
-        }
-        if (h === '/overview' && (path === '/dashboard' || path === '/dashboard.html')) {
-          a.classList.add('active');
-        }
-      }
-    });
-
     /* Fill user info */
     const username = user ? (user.username || '–') : '–';
     const usernameEl = el.querySelector('#topbar-username');
