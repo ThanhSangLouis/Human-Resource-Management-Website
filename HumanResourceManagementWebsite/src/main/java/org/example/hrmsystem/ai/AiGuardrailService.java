@@ -34,7 +34,22 @@ public class AiGuardrailService {
         return text;
     }
 
+    /**
+     * Gộp mọi khoảng trắng Unicode (NBSP từ Word/Excel, narrow space, v.v.) thành space ASCII.
+     * Tránh đếm sai số từ và không khớp keyword khi người dùng dán văn bản.
+     */
+    public static String normalizeWhitespace(String message) {
+        if (message == null) {
+            return "";
+        }
+        String s = message.strip();
+        if (s.isEmpty()) {
+            return "";
+        }
+        return s.replaceAll("[\\p{Zs}\\t]+", " ").trim().replaceAll(" +", " ");
+    }
+
     public String normalizeForMatch(String message) {
-        return message.toLowerCase(Locale.ROOT);
+        return normalizeWhitespace(message).toLowerCase(Locale.ROOT);
     }
 }

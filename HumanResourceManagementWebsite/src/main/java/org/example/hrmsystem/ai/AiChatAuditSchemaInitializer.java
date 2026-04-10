@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
 import javax.sql.DataSource;
 
 /**
- * Tạo bảng audit khi {@code ai.audit.auto-ddl=true} (mặc định). Tắt trong test ({@code ai.audit.auto-ddl=false})
+ * Tạo bảng audit khi {@code ai.audit.auto-ddl=true} (mặc định). Tắt trong test
+ * ({@code ai.audit.auto-ddl=false})
  * vì H2 + {@code ddl-auto=create-drop} đã tạo từ entity.
  */
 @Component
@@ -26,8 +27,7 @@ public class AiChatAuditSchemaInitializer implements ApplicationRunner {
 
     public AiChatAuditSchemaInitializer(
             DataSource dataSource,
-            @Value("${ai.audit.auto-ddl:true}") boolean autoDdl
-    ) {
+            @Value("${ai.audit.auto-ddl:true}") boolean autoDdl) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.autoDdl = autoDdl;
     }
@@ -58,6 +58,19 @@ public class AiChatAuditSchemaInitializer implements ApplicationRunner {
             log.info("AI chat audit table ensured (CREATE IF NOT EXISTS)");
         } catch (Exception e) {
             log.warn("Could not ensure ai_chat_audit table (JPA may still manage schema in dev): {}", e.getMessage());
+        }
+        try {
+            jdbc.execute("""
+                    CREATE TABLE IF NOT EXISTS ai_rate_limit (
+                        user_id       BIGINT NOT NULL,
+                        window_minute BIGINT NOT NULL,
+                        msg_count     INT    NOT NULL DEFAULT 1,
+                        PRIMARY KEY (user_id, window_minute)
+                    )
+                    """);
+            log.info("AI rate-limit table ensured (CREATE IF NOT EXISTS)");
+        } catch (Exception e) {
+            log.warn("Could not ensure ai_rate_limit table: {}", e.getMessage());
         }
     }
 }

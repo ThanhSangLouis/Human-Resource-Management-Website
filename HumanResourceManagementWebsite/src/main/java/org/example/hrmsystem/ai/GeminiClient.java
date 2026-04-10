@@ -62,22 +62,60 @@ public class GeminiClient {
     }
 
     /**
-     * Gọi v1beta generateContent (cùng hướng OneShop): query ?key=, body generationConfig + safetySettings.
+     * Gọi Gemini không có lịch sử hội thoại (single-turn).
      */
     public Optional<String> generateContent(String systemInstruction, String userText) {
+        return generateContent(systemInstruction, userText, List.of());
+    }
+
+    /**
+     * Gọi Gemini với lịch sử hội thoại multi-turn.
+     *
+     * <p>{@code history} là danh sách các turn trước đó, mỗi phần tử gồm:
+     * <ul>
+     *   <li>{@code role} — {@code "user"} hoặc {@code "model"}</li>
+     *   <li>{@code text} — nội dung turn đó</li>
+     * </ul>
+     * Các turn được prepend vào {@code contents[]} trước turn hiện tại của user.
+     */
+    public Optional<String> generateContent(
+            String systemInstruction,
+            String userText,
+            List<Map<String, String>> history
+    ) {
         if (!isConfigured()) {
             return Optional.empty();
         }
         String path = "/v1beta/models/" + model + ":generateContent";
         ObjectNode root = jsonMapper.createObjectNode();
 
+        // System instruction
         ObjectNode sys = jsonMapper.createObjectNode();
         ArrayNode sysParts = jsonMapper.createArrayNode();
         sysParts.add(jsonMapper.createObjectNode().put("text", systemInstruction));
         sys.set("parts", sysParts);
         root.set("systemInstruction", sys);
 
+        // Multi-turn contents: history turns + current user turn
         ArrayNode contents = jsonMapper.createArrayNode();
+        if (history != null) {
+            for (Map<String, String> turn : history) {
+                String role = turn.getOrDefault("role", "user");
+                String text = turn.getOrDefault("text", "");
+                if (text.isBlank()) {
+                    continue;
+                }
+                // Gemini chấp nhận "user" và "model"; map "assistant" → "model"
+                String geminiRole = "assistant".equalsIgnoreCase(role) ? "model" : role;
+                ObjectNode turnNode = jsonMapper.createObjectNode();
+                turnNode.put("role", geminiRole);
+                ArrayNode parts = jsonMapper.createArrayNode();
+                parts.add(jsonMapper.createObjectNode().put("text", text));
+                turnNode.set("parts", parts);
+                contents.add(turnNode);
+            }
+        }
+        // Current user turn
         ObjectNode userTurn = jsonMapper.createObjectNode();
         userTurn.put("role", "user");
         ArrayNode userParts = jsonMapper.createArrayNode();
@@ -132,7 +170,7 @@ public class GeminiClient {
             log.warn("Gemini parse error: {}", e.getMessage());
             return Optional.empty();
         } catch (Exception e) {
-            log.warn("Gemini parse error: {}", e.getMessage());
+            log.warn("Gemini unexpected error: {}", e.getMessage());
             return Optional.empty();
         }
     }

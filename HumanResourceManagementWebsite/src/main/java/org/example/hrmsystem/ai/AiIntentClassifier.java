@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Phân loại intent theo rule keyword (MVP). Self-service được ưu tiên trước FAQ để tránh rơi FAQ với câu cá nhân.
@@ -13,7 +14,10 @@ public class AiIntentClassifier {
 
     private static final Set<AiIntent> MANAGER_INTENTS = Set.of(
             AiIntent.MGR_PENDING_LEAVE,
-            AiIntent.MGR_TEAM_ATTENDANCE
+            AiIntent.MGR_TEAM_ATTENDANCE,
+            AiIntent.DASHBOARD_STATS,
+            AiIntent.HR_EMPLOYEE_LOOKUP,   // Manager chỉ xem trong phạm vi team
+            AiIntent.HR_EMPLOYEE_DETAILS   // Follow-up chi tiết cũng nằm trong scope team
     );
 
     private static final String[] KW_MGR_PENDING = {
@@ -27,6 +31,74 @@ public class AiIntentClassifier {
     };
     private static final String[] KW_SUMMARY = {
             "tóm tắt", "tom tat", "summary", "unread", "chưa đọc", "chua doc", "bullet"
+    };
+    private static final String[] KW_STATS = {
+            // Tiếng Việt
+            "thống kê", "thong ke", "tổng quan", "tong quan", "báo cáo", "bao cao",
+            "số nhân viên", "so nhan vien", "tổng nhân viên", "tong nhan vien",
+            "phòng ban có", "nhân sự", "nhan su",
+            "tỷ lệ chấm công", "ty le cham cong", "tỷ lệ đi làm", "ty le di lam",
+            "bao nhiêu nhân viên", "bao nhieu nhan vien",
+            "số liệu", "so lieu", "dashboard", "overview", "statistic",
+            // Hỏi tháng này cụ thể (mà không kèm cụm self-service)
+            "tháng này có bao nhiêu", "thang nay co bao nhieu"
+    };
+    /**
+     * {@code hi}/{@code hey} không dùng substring — tránh nhầm với tên tiếng Việt kiểu "Thi"
+     * (chuỗi {@code thi } chứa {@code hi }).
+     */
+    private static final Pattern STANDALONE_HI_OR_HEY = Pattern.compile(
+            "(?u)(?<![\\p{L}])hi(?![\\p{L}])|(?<![\\p{L}])hey(?![\\p{L}])");
+
+    /** Chat xã giao, chào hỏi, cảm ơn — không load policy */
+    private static final String[] KW_CHITCHAT = {
+            // chào (hi/hey xử lý bằng STANDALONE_HI_OR_HEY)
+            "xin chào", "xin chao", "chào bạn", "chao ban", "hello",
+            "good morning", "good afternoon", "good evening", "chào buổi",
+            // cảm ơn
+            "cảm ơn", "cam on", "thanks", "thank you", "camon", "tks", "thx",
+            // hỏi về bot
+            "bạn là ai", "ban la ai", "giới thiệu bản thân", "bác có thể giúp",
+            "bạn có thể giúp", "can you help", "what can you do", "bạn giúp được gì",
+            "bạn có thể làm gì", "khả năng của bạn",
+            // ok, được rồi
+            "ok", "okay", "được rồi", "duoc roi", "hiểu rồi", "hieu roi", "rồi", "nice", "great",
+            "tốt", "tuyệt", "tuyet"
+    };
+    /** Tra cứu hồ sơ nhân viên theo tên / mã (♥ HR, Admin, Manager) */
+    private static final String[] KW_EMP_LOOKUP = {
+            // Tiếng Việt — có cụm "nhân viên"
+            "thông tin nhân viên", "thong tin nhan vien",
+            "hồ sơ nhân viên", "ho so nhan vien",
+            "tìm nhân viên", "tim nhan vien",
+            "tra cứu nhân viên", "tra cuu nhan vien",
+            "tìm kiếm nhân viên", "tim kiem nhan vien",
+            // Mẫu tự nhiên: "cho tôi / xem / biết / hiển thị thông tin ..."
+            "cho tôi thông tin", "cho toi thong tin",
+            "xem thông tin", "xem thong tin",
+            "biết thông tin", "biet thong tin",
+            "thông tin về", "thong tin ve",
+            "thông tin của", "thong tin cua",
+            "hồ sơ của", "ho so cua",
+            // Thuộc tính cụ thể
+            "mã nhân viên", "ma nhan vien",
+            "employee code", "employees named",
+            "chức vụ của", "chuc vu cua",
+            "phòng ban của", "phong ban cua",
+            "email của", "email cua",
+            "số điện thoại của", "so dien thoai cua",
+            "ngày sinh của", "ngay sinh cua",
+            "ngày vào công ty của", "ngay vao cong ty cua",
+            "lương cơ bản của", "luong co ban cua",
+            // Tiếng Anh
+            "lookup employee", "find employee", "search employee"
+    };
+
+    /** Follow-up đòi "chi tiết hơn" sau khi đã tra cứu nhân viên */
+    private static final String[] KW_EMP_DETAILS = {
+            "chi tiết", "chi tiet", "cụ thể", "cu the", "chi tiết hơn", "chi tiet hon",
+            "thêm chi tiết", "them chi tiet", "more details", "details please", "detail",
+            "cần chi tiết", "can chi tiet", "xem chi tiết", "xem chi tiet"
     };
     /** FAQ / policy — sau self-service để câu cá nhân không bị nuốt bởi "quy định" chung */
     private static final String[] KW_FAQ = {
@@ -60,24 +132,36 @@ public class AiIntentClassifier {
 
     public AiIntent classify(String message) {
         String n = guardrail.normalizeForMatch(message);
+
+        // CHITCHAT tr\u01b0\u1edbc ti\u00ean \u2014 ch\u00e0o h\u1ecfi / x\u00e3 giao kh\u00f4ng \u0111\u01b0\u1ee3c r\u01a1i v\u00e0o FAQ
+        if (STANDALONE_HI_OR_HEY.matcher(n).find() || containsAny(n, KW_CHITCHAT)) {
+            return AiIntent.CHITCHAT;
+        }
+
         if (containsAny(n, KW_MGR_PENDING)) {
             return AiIntent.MGR_PENDING_LEAVE;
         }
         if (containsAny(n, KW_MGR_LATE)) {
             return AiIntent.MGR_TEAM_ATTENDANCE;
         }
+        if (containsAny(n, KW_STATS)) {
+            return AiIntent.DASHBOARD_STATS;
+        }
         if (containsAny(n, KW_SUMMARY)) {
             return AiIntent.NOTIF_SUMMARY;
         }
+        if (containsAny(n, KW_EMP_DETAILS)) {
+            return AiIntent.HR_EMPLOYEE_DETAILS;
+        }
         /*
-         * Câu hỏi quy định / policy / hướng dẫn chung phải lấy FAQ (policy .md) trước,
-         * kẻo "quy định chấm công" bị nuốt bởi intent chấm công cá nhân.
-         * Nếu user nói rõ "của tôi" + dữ liệu cá nhân → vẫn self-service.
+         * C\u00e2u h\u1ecfi quy \u0111\u1ecbnh / policy / h\u01b0\u1edbng d\u1eabn chung ph\u1ea3i l\u1ea5y FAQ (policy .md) tr\u01b0\u1edbc,
+         * k\u1ebb\u1edd "quy \u0111\u1ecbnh ch\u1ea5m c\u00f4ng" b\u1ecb nu\u1ed1t b\u1edfi intent ch\u1ea5m c\u00f4ng c\u00e1 nh\u00e2n.
+         * N\u1ebfu user n\u00f3i r\u00f5 "\u1ee7a t\u00f4i" + d\u1eef li\u1ec7u c\u00e1 nh\u00e2n \u2192 v\u1eabn self-service.
          */
         if (looksLikePolicyOrRulesQuestion(n) && !clearlyPersonalDataScope(n)) {
             return AiIntent.FAQ;
         }
-        // Self-service trước FAQ mặc định
+        // Self-service tr\u01b0\u1edbc FAQ m\u1eb7c \u0111\u1ecbnh
         if (containsAny(n, KW_SELF_LEAVE) || looksLikePersonalLeaveQuery(n)) {
             return AiIntent.SELF_LEAVE;
         }
@@ -89,6 +173,15 @@ public class AiIntentClassifier {
         }
         if (containsAny(n, KW_FAQ)) {
             return AiIntent.FAQ;
+        }
+        // Tra cứu hồ sơ nhân viên — siết trước fallback
+        if (containsAny(n, KW_EMP_LOOKUP)) {
+            return AiIntent.HR_EMPLOYEE_LOOKUP;
+        }
+        // Message ngắn không khớp intent nghiệp vụ phía trên → xã giao (không đặt rule này trước MGR/SELF)
+        long wordCount = n.isBlank() ? 0 : n.trim().split("\\s+").length;
+        if (wordCount <= 5) {
+            return AiIntent.CHITCHAT;
         }
         return AiIntent.FAQ;
     }

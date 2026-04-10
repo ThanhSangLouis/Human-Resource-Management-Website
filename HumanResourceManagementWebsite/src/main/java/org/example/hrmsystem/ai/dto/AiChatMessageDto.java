@@ -10,7 +10,7 @@ public class AiChatMessageDto {
     private String role;
 
     @NotBlank
-    @Size(max = 2000)
+    @Size(max = 12_000)   // model reply có thể dài: bảng Markdown, danh sách nhiều bản ghi
     private String text;
 
     public String getRole() {

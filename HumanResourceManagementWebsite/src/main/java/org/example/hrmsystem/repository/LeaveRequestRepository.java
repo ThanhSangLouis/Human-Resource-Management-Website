@@ -127,4 +127,23 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             @Param("yearStart") LocalDate yearStart,
             @Param("yearEnd") LocalDate yearEnd
     );
+
+    /**
+     * Tổng ngày phép đã duyệt theo loại (ANNUAL/UNPAID/SICK/...) giao với khoảng [rangeStart, rangeEnd].
+     */
+    @Query("""
+            SELECT COALESCE(SUM(lr.totalDays), 0) FROM LeaveRequest lr
+            WHERE lr.employeeId = :employeeId
+              AND lr.status = :approved
+              AND lr.leaveType = :leaveType
+              AND lr.startDate <= :rangeEnd
+              AND lr.endDate >= :rangeStart
+            """)
+    Long sumApprovedDaysOverlappingRangeByType(
+            @Param("employeeId") Long employeeId,
+            @Param("approved") LeaveStatus approved,
+            @Param("leaveType") LeaveType leaveType,
+            @Param("rangeStart") LocalDate rangeStart,
+            @Param("rangeEnd") LocalDate rangeEnd
+    );
 }

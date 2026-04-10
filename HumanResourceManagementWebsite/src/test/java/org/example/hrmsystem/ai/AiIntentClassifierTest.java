@@ -79,4 +79,16 @@ class AiIntentClassifierTest {
     void selfAttendanceAndNotif(String message, AiIntent expected) {
         assertThat(classifier.classify(message)).isEqualTo(expected);
     }
+
+    @Test
+    void employeeLookup_whenNbspBetweenWords_notChitchat() {
+        String nbsp = "\u00A0";
+        String message = "cho" + nbsp + "tôi" + nbsp + "thông" + nbsp + "tin" + nbsp + "Dinh" + nbsp + "Thi" + nbsp + "Yen";
+        assertThat(classifier.classify(message)).isEqualTo(AiIntent.HR_EMPLOYEE_LOOKUP);
+    }
+
+    @Test
+    void employeeLookup_plainSpaces() {
+        assertThat(classifier.classify("cho tôi thông tin Dinh Thi Yen")).isEqualTo(AiIntent.HR_EMPLOYEE_LOOKUP);
+    }
 }

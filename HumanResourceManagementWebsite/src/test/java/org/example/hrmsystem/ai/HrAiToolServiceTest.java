@@ -4,10 +4,13 @@ import tools.jackson.databind.json.JsonMapper;
 import org.example.hrmsystem.dto.AttendanceResponse;
 import org.example.hrmsystem.model.Role;
 import org.example.hrmsystem.model.UserAccount;
+import org.example.hrmsystem.repository.AttendanceRepository;
 import org.example.hrmsystem.repository.LeaveRequestRepository;
 import org.example.hrmsystem.security.AppUserDetails;
 import org.example.hrmsystem.service.AttendanceHistoryAccess;
 import org.example.hrmsystem.service.AttendanceService;
+import org.example.hrmsystem.service.DashboardService;
+import org.example.hrmsystem.service.EmployeeService;
 import org.example.hrmsystem.service.LeaveRequestService;
 import org.example.hrmsystem.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +42,13 @@ class HrAiToolServiceTest {
     @Mock
     NotificationService notificationService;
     @Mock
+    AttendanceRepository attendanceRepository;
+    @Mock
     LeaveRequestRepository leaveRequestRepository;
+    @Mock
+    DashboardService dashboardService;
+    @Mock
+    EmployeeService employeeService;
 
     private final JsonMapper jsonMapper = JsonMapper.shared();
     private HrAiToolService hrAiToolService;
@@ -50,7 +59,10 @@ class HrAiToolServiceTest {
                 attendanceService,
                 leaveRequestService,
                 notificationService,
+                attendanceRepository,
                 leaveRequestRepository,
+                dashboardService,
+                employeeService,
                 jsonMapper,
                 12
         );

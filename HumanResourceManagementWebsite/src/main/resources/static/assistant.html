@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,8 +9,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="/frags.js?v=4"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { height: 100%; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      height: 100%;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(165deg, #eef1fb 0%, #f4f6fb 45%, #f8f9fd 100%);
@@ -20,6 +31,7 @@
       flex-direction: column;
       overflow: hidden;
     }
+
     .topbar {
       background: #fff;
       border-bottom: 1px solid #e5e9f2;
@@ -32,29 +44,131 @@
       gap: 10px 20px;
       position: relative;
       z-index: 100;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
       flex-shrink: 0;
     }
-    .topbar-logo { font-size: 18px; font-weight: 700; color: #2c3e8c; display: flex; align-items: center; gap: 8px; }
-    .topbar-logo span.dot { color: #f5a623; }
-    .topbar-nav { display: flex; gap: 28px; flex-wrap: wrap; }
-    .topbar-nav a { text-decoration: none; color: #5a6a85; font-size: 14px; font-weight: 500; padding: 4px 0; border-bottom: 2px solid transparent; }
-    .topbar-nav a.active, .topbar-nav a:hover { color: #2c3e8c; border-bottom-color: #2c3e8c; }
-    .topbar-user { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #5a6a85; margin-left: auto; }
-    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: #2c3e8c; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; }
-    .btn-ghost { background: none; border: 1px solid #dde2ee; border-radius: 8px; padding: 9px 18px; font-size: 13.5px; font-weight: 500; color: #5a6a85; cursor: pointer; }
-    .btn-ghost:hover { border-color: #2c3e8c; color: #2c3e8c; }
+
+    .topbar-logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #2c3e8c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-logo span.dot {
+      color: #f5a623;
+    }
+
+    .topbar-nav {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .topbar-nav a {
+      text-decoration: none;
+      color: #5a6a85;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 4px 0;
+      border-bottom: 2px solid transparent;
+    }
+
+    .topbar-nav a.active,
+    .topbar-nav a:hover {
+      color: #2c3e8c;
+      border-bottom-color: #2c3e8c;
+    }
+
+    .topbar-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #5a6a85;
+      margin-left: auto;
+    }
+
+    .avatar-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #2c3e8c;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-ghost {
+      background: none;
+      border: 1px solid #dde2ee;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #5a6a85;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: #2c3e8c;
+      color: #2c3e8c;
+    }
+
     .layout {
       display: flex;
       flex: 1;
       min-height: 0;
       overflow: hidden;
     }
-    .sidebar { width: 220px; background: #fff; border-right: 1px solid #e5e9f2; padding: 20px 0; flex-shrink: 0; overflow-y: auto; }
-    .sidebar-section-title { font-size: 11px; font-weight: 700; color: #8a94a6; letter-spacing: .8px; text-transform: uppercase; padding: 0 20px 8px; margin-top: 16px; }
-    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 13.5px; color: #5a6a85; text-decoration: none; border-left: 3px solid transparent; }
-    .sidebar-item:hover { background: #f0f4ff; color: #2c3e8c; }
-    .sidebar-item.active { background: #eef2ff; color: #2c3e8c; font-weight: 600; border-left-color: #2c3e8c; }
+
+    .sidebar {
+      width: 220px;
+      background: #fff;
+      border-right: 1px solid #e5e9f2;
+      padding: 20px 0;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8a94a6;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      padding: 0 20px 8px;
+      margin-top: 16px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      font-size: 13.5px;
+      color: #5a6a85;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+    }
+
+    .sidebar-item:hover {
+      background: #f0f4ff;
+      color: #2c3e8c;
+    }
+
+    .sidebar-item.active {
+      background: #eef2ff;
+      color: #2c3e8c;
+      font-weight: 600;
+      border-left-color: #2c3e8c;
+    }
+
     .main {
       flex: 1;
       min-width: 0;
@@ -65,7 +179,17 @@
       max-width: none;
       width: 100%;
     }
-    .page-title { font-size: 12px; font-weight: 600; color: #8a94a6; letter-spacing: .35px; text-transform: uppercase; margin-bottom: 10px; flex-shrink: 0; }
+
+    .page-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #8a94a6;
+      letter-spacing: .35px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
     .card {
       flex: 1;
       min-height: 0;
@@ -77,14 +201,56 @@
       box-shadow: 0 4px 24px rgba(44, 62, 140, .08);
       overflow: hidden;
     }
+
     .card-head {
       flex-shrink: 0;
       background: linear-gradient(135deg, #2c3e8c 0%, #243878 55%, #1e2d6e 100%);
       padding: 16px 20px;
       color: #fff;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
     }
-    .card-head h1 { font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
-    .card-head p { font-size: 13px; opacity: .9; margin-top: 6px; line-height: 1.45; max-width: none; }
+
+    .card-head-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-head h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+
+    .card-head p {
+      font-size: 13px;
+      opacity: .9;
+      margin-top: 6px;
+      line-height: 1.45;
+      max-width: none;
+    }
+
+    .btn-new-chat {
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, .15);
+      border: 1px solid rgba(255, 255, 255, .3);
+      color: #fff;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s;
+      font-family: inherit;
+    }
+
+    .btn-new-chat:hover {
+      background: rgba(255, 255, 255, .25);
+    }
+
     .card-body {
       flex: 1;
       min-height: 0;
@@ -93,6 +259,7 @@
       padding: 16px 18px 18px;
       gap: 12px;
     }
+
     #ai-log {
       flex: 1;
       min-height: 120px;
@@ -110,9 +277,20 @@
       align-items: stretch;
       width: 100%;
     }
-    #ai-log::-webkit-scrollbar { width: 8px; }
-    #ai-log::-webkit-scrollbar-thumb { background: #c9d2e6; border-radius: 8px; }
-    #ai-log::-webkit-scrollbar-track { background: transparent; }
+
+    #ai-log::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #ai-log::-webkit-scrollbar-thumb {
+      background: #c9d2e6;
+      border-radius: 8px;
+    }
+
+    #ai-log::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
     .ai-empty {
       display: flex;
       flex-direction: column;
@@ -123,24 +301,40 @@
       padding: 32px 16px;
       gap: 8px;
     }
-    .ai-empty strong { color: #5a6a85; font-size: 14px; }
+
+    .ai-empty strong {
+      color: #5a6a85;
+      font-size: 14px;
+    }
+
     .bubble {
       margin-bottom: 14px;
       padding: 12px 14px;
       border-radius: 12px;
       animation: bubbleIn .22s ease-out;
     }
+
     .bubble.ai {
       max-width: 100%;
       align-self: stretch;
     }
+
     .bubble.user {
       max-width: min(100%, 520px);
     }
+
     @keyframes bubbleIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     .bubble.user {
       background: linear-gradient(135deg, #e8ecff, #dfe6ff);
       margin-left: auto;
@@ -149,11 +343,13 @@
       border: 1px solid #d0d8f5;
       box-shadow: 0 2px 8px rgba(44, 62, 140, .08);
     }
+
     .bubble.ai {
       background: #fff;
       border: 1px solid #e8ecf4;
-      box-shadow: 0 2px 10px rgba(0,0,0,.04);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .04);
     }
+
     .bubble .meta {
       font-size: 11px;
       color: #8a94a6;
@@ -161,14 +357,44 @@
       padding-top: 8px;
       border-top: 1px dashed #e5e9f2;
     }
-    .bubble.user .meta { border-top-color: #c8d0ef; }
-    .ai-reply { color: #252b3d; }
-    .ai-reply .ai-p { margin: 0 0 10px; }
-    .ai-reply .ai-p:last-child { margin-bottom: 0; }
-    .ai-reply .ai-h { font-size: 13px; font-weight: 700; color: #2c3e8c; margin: 12px 0 8px; letter-spacing: .02em; }
-    .ai-reply .ai-h:first-child { margin-top: 0; }
-    .ai-reply ul.ai-ul { margin: 6px 0 10px 1.1em; padding: 0; }
-    .ai-reply ul.ai-ul li { margin: 4px 0; }
+
+    .bubble.user .meta {
+      border-top-color: #c8d0ef;
+    }
+
+    .ai-reply {
+      color: #252b3d;
+    }
+
+    .ai-reply .ai-p {
+      margin: 0 0 10px;
+    }
+
+    .ai-reply .ai-p:last-child {
+      margin-bottom: 0;
+    }
+
+    .ai-reply .ai-h {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2c3e8c;
+      margin: 12px 0 8px;
+      letter-spacing: .02em;
+    }
+
+    .ai-reply .ai-h:first-child {
+      margin-top: 0;
+    }
+
+    .ai-reply ul.ai-ul {
+      margin: 6px 0 10px 1.1em;
+      padding: 0;
+    }
+
+    .ai-reply ul.ai-ul li {
+      margin: 4px 0;
+    }
+
     .ai-reply .ai-form-block {
       background: #f6f8fd;
       border: 1px solid #e3e8f2;
@@ -176,6 +402,7 @@
       padding: 10px 12px;
       margin: 8px 0 12px;
     }
+
     .ai-reply .ai-field {
       display: grid;
       grid-template-columns: minmax(100px, 38%) 1fr;
@@ -185,15 +412,32 @@
       border-bottom: 1px solid #e8ecf4;
       font-size: 13px;
     }
-    .ai-reply .ai-field:last-child { border-bottom: none; padding-bottom: 0; }
-    .ai-reply .ai-field:first-of-type { padding-top: 0; }
+
+    .ai-reply .ai-field:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .ai-reply .ai-field:first-of-type {
+      padding-top: 0;
+    }
+
     .ai-reply .ai-label {
       color: #5a6a85;
       font-weight: 600;
       font-size: 12px;
     }
-    .ai-reply .ai-value { color: #1a2035; word-break: break-word; }
-    .ai-reply strong { font-weight: 600; color: #1e2a4a; }
+
+    .ai-reply .ai-value {
+      color: #1a2035;
+      word-break: break-word;
+    }
+
+    .ai-reply strong {
+      font-weight: 600;
+      color: #1e2a4a;
+    }
+
     .ai-reply .ai-md-heading {
       font-size: 13px;
       font-weight: 700;
@@ -201,7 +445,11 @@
       margin: 10px 0 6px;
       line-height: 1.4;
     }
-    .ai-reply .ai-md-heading:first-child { margin-top: 0; }
+
+    .ai-reply .ai-md-heading:first-child {
+      margin-top: 0;
+    }
+
     .ai-reply .ai-table-wrap {
       overflow-x: auto;
       margin: 8px 0 12px;
@@ -209,12 +457,14 @@
       border: 1px solid #e3e8f2;
       background: #fafbfd;
     }
+
     .ai-reply table.ai-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12px;
       min-width: 520px;
     }
+
     .ai-reply table.ai-table th,
     .ai-reply table.ai-table td {
       border: 1px solid #e3e8f2;
@@ -222,19 +472,23 @@
       text-align: left;
       vertical-align: top;
     }
+
     .ai-reply table.ai-table th {
       background: #eef2fa;
       color: #3d4a63;
       font-weight: 600;
       white-space: nowrap;
     }
+
     .ai-reply table.ai-table td {
       color: #1a2035;
       word-break: break-word;
     }
+
     .ai-reply table.ai-table tbody tr:nth-child(even) {
       background: #f6f8fd;
     }
+
     .composer-wrap {
       flex-shrink: 0;
       display: flex;
@@ -242,7 +496,12 @@
       gap: 8px;
       width: 100%;
     }
-    .composer-hint { font-size: 11px; color: #8a94a6; }
+
+    .composer-hint {
+      font-size: 11px;
+      color: #8a94a6;
+    }
+
     .composer-hint kbd {
       display: inline-block;
       padding: 1px 6px;
@@ -252,7 +511,13 @@
       font-size: 10px;
       font-family: inherit;
     }
-    .row { display: flex; gap: 10px; align-items: flex-end; }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
     textarea {
       width: 100%;
       min-height: 44px;
@@ -266,11 +531,13 @@
       resize: none;
       transition: border-color .15s, box-shadow .15s;
     }
+
     textarea:focus {
       outline: none;
       border-color: #2c3e8c;
       box-shadow: 0 0 0 3px rgba(44, 62, 140, .12);
     }
+
     .btn-primary {
       background: linear-gradient(180deg, #3548a8, #2c3e8c);
       color: #fff;
@@ -284,10 +551,28 @@
       box-shadow: 0 2px 8px rgba(44, 62, 140, .25);
       transition: transform .1s, opacity .15s;
     }
-    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
-    .btn-primary:active:not(:disabled) { transform: translateY(0); }
-    .btn-primary:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
-    .err { color: #b91c1c; font-size: 13px; margin: 0; }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .err {
+      color: #b91c1c;
+      font-size: 13px;
+      margin: 0;
+    }
+
     #toast {
       position: fixed;
       bottom: 24px;
@@ -299,14 +584,16 @@
       font-size: 13px;
       display: none;
       z-index: 400;
-      box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
     }
+
     .typing-dots {
       display: inline-flex;
       gap: 4px;
       align-items: center;
       padding: 4px 0;
     }
+
     .typing-dots span {
       width: 6px;
       height: 6px;
@@ -314,26 +601,60 @@
       background: #8a94a6;
       animation: typingBounce 1.2s ease-in-out infinite;
     }
-    .typing-dots span:nth-child(2) { animation-delay: .15s; }
-    .typing-dots span:nth-child(3) { animation-delay: .3s; }
+
+    .typing-dots span:nth-child(2) {
+      animation-delay: .15s;
+    }
+
+    .typing-dots span:nth-child(3) {
+      animation-delay: .3s;
+    }
+
     @keyframes typingBounce {
-      0%, 80%, 100% { opacity: .35; transform: translateY(0); }
-      40% { opacity: 1; transform: translateY(-3px); }
+
+      0%,
+      80%,
+      100% {
+        opacity: .35;
+        transform: translateY(0);
+      }
+
+      40% {
+        opacity: 1;
+        transform: translateY(-3px);
+      }
     }
+
     @media (max-width: 900px) {
-      .sidebar { width: 200px; }
+      .sidebar {
+        width: 200px;
+      }
     }
+
     @media (max-width: 720px) {
-      .layout { flex-direction: column; }
-      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e5e9f2; max-height: 160px; }
-      .main { padding: 12px; }
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e5e9f2;
+        max-height: 160px;
+      }
+
+      .main {
+        padding: 12px;
+      }
     }
+
     .quick-prompts {
       display: flex;
       flex-direction: column;
       gap: 8px;
       flex-shrink: 0;
     }
+
     .quick-prompts-label {
       font-size: 11px;
       font-weight: 600;
@@ -341,12 +662,14 @@
       text-transform: uppercase;
       letter-spacing: .4px;
     }
+
     .quick-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
     }
+
     .quick-chip {
       appearance: none;
       border: 1px solid #d0d8ea;
@@ -363,13 +686,16 @@
       max-width: 100%;
       text-align: left;
     }
+
     .quick-chip:hover {
       background: #e8ecff;
       border-color: #2c3e8c;
     }
+
     .quick-chip:active {
       transform: scale(0.98);
     }
+
     .quick-chip:disabled {
       opacity: .45;
       cursor: not-allowed;
@@ -377,489 +703,567 @@
     }
   </style>
 </head>
+
 <body>
 
-<header class="topbar" id="topbar-placeholder"></header>
-<div class="layout">
-  <aside class="sidebar" id="navbar-placeholder"></aside>
-  <main class="main">
-    <div class="page-title">Trợ lý AI</div>
-    <div class="card">
-      <div class="card-head">
-        <h1>Chat HR (Gemini)</h1>
-        <p id="assistant-head-desc">Đang tải mô tả theo vai trò…</p>
-      </div>
-      <div class="card-body">
-        <div id="ai-log" aria-live="polite">
-          <div class="ai-empty" id="ai-empty">
-            <strong>Bắt đầu hội thoại</strong>
-            <span id="assistant-empty-hint">Chọn gợi ý nhanh hoặc gõ câu hỏi.</span>
+  <header class="topbar" id="topbar-placeholder"></header>
+  <div class="layout">
+    <aside class="sidebar" id="navbar-placeholder"></aside>
+    <main class="main">
+      <div class="page-title">Trợ lý AI</div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-head-text">
+            <h1>Chat HR (Gemini)</h1>
+            <p id="assistant-head-desc">Đang tải mô tả theo vai trò…</p>
           </div>
+          <button type="button" class="btn-new-chat" id="btn-new-chat" title="Xóa lịch sử và bắt đầu hội thoại mới">✦
+            Cuộc hội thoại mới</button>
         </div>
-        <div class="composer-wrap">
-          <div class="quick-prompts">
-            <span class="quick-prompts-label" id="assistant-quick-label">Gợi ý nhanh</span>
-            <div class="quick-chips" id="ai-quick-chips" role="group" aria-label="Câu hỏi mẫu"></div>
-          </div>
-          <div class="row">
-            <div style="flex:1;min-width:0;">
-              <textarea id="ai-input" rows="2" placeholder=""></textarea>
+        <div class="card-body">
+          <div id="ai-log" aria-live="polite">
+            <div class="ai-empty" id="ai-empty">
+              <strong>Bắt đầu hội thoại</strong>
+              <span id="assistant-empty-hint">Chọn gợi ý nhanh hoặc gõ câu hỏi.</span>
             </div>
-            <button type="button" class="btn-primary" id="ai-send">Gửi</button>
           </div>
-          <p class="composer-hint"><kbd>Enter</kbd> gửi · <kbd>Shift</kbd>+<kbd>Enter</kbd> xuống dòng</p>
-          <p class="err" id="ai-err" style="display:none;"></p>
+          <div class="composer-wrap">
+            <div class="quick-prompts">
+              <span class="quick-prompts-label" id="assistant-quick-label">Gợi ý nhanh</span>
+              <div class="quick-chips" id="ai-quick-chips" role="group" aria-label="Câu hỏi mẫu"></div>
+            </div>
+            <div class="row">
+              <div style="flex:1;min-width:0;">
+                <textarea id="ai-input" rows="2" placeholder=""></textarea>
+              </div>
+              <button type="button" class="btn-primary" id="ai-send">Gửi</button>
+            </div>
+            <p class="composer-hint"><kbd>Enter</kbd> gửi · <kbd>Shift</kbd>+<kbd>Enter</kbd> xuống dòng</p>
+            <p class="err" id="ai-err" style="display:none;"></p>
+          </div>
         </div>
       </div>
-    </div>
-  </main>
-</div>
-<div id="toast"></div>
+    </main>
+  </div>
+  <div id="toast"></div>
 
-<script>
-(function () {
-  const logEl = document.getElementById('ai-log');
-  const emptyEl = document.getElementById('ai-empty');
-  const input = document.getElementById('ai-input');
-  const sendBtn = document.getElementById('ai-send');
-  const errEl = document.getElementById('ai-err');
-  const toast = document.getElementById('toast');
-  const quickChips = document.getElementById('ai-quick-chips');
-  const headDescEl = document.getElementById('assistant-head-desc');
-  const emptyHintEl = document.getElementById('assistant-empty-hint');
-  const quickLabelEl = document.getElementById('assistant-quick-label');
+  <script>
+    (function () {
+      const logEl = document.getElementById('ai-log');
+      const emptyEl = document.getElementById('ai-empty');
+      const input = document.getElementById('ai-input');
+      const sendBtn = document.getElementById('ai-send');
+      const errEl = document.getElementById('ai-err');
+      const toast = document.getElementById('toast');
+      const quickChips = document.getElementById('ai-quick-chips');
+      const headDescEl = document.getElementById('assistant-head-desc');
+      const emptyHintEl = document.getElementById('assistant-empty-hint');
+      const quickLabelEl = document.getElementById('assistant-quick-label');
+      const btnNewChat = document.getElementById('btn-new-chat');
 
-  /**
-   * Mô tả + câu mẫu theo role (khớp intent classifier / RBAC backend).
-   */
-  var ASSISTANT_UI = {
-    EMPLOYEE: {
-      head:
-        'Trợ lý giúp bạn xem chấm công, phép, thông báo và đọc quy định nội bộ. Chỉ truy cập dữ liệu của chính bạn — không đưa mật khẩu lên đây.',
-      emptyHint:
-        'Dùng gợi ý bên dưới hoặc gõ câu hỏi. Trả lời dựa trên dữ liệu và policy trong phạm vi nhân viên.',
-      quickLabel: 'Gợi ý cho nhân viên',
-      placeholder: 'Ví dụ: quy định nghỉ phép, chấm công hôm nay, tóm tắt thông báo…',
-      chips: [
-        { q: 'Quy định chấm công', label: 'Quy định chấm công' },
-        { q: 'Chấm công hôm nay của tôi', label: 'Chấm công hôm nay' },
-        { q: 'Phép năm của tôi còn bao nhiêu ngày?', label: 'Phép năm của tôi' },
-        { q: 'Tóm tắt thông báo', label: 'Tóm tắt thông báo' },
-        { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
-        { q: 'Thông báo gần đây của tôi', label: 'Thông báo gần đây' }
-      ]
-    },
-    MANAGER: {
-      head:
-        'Trợ lý hỗ trợ quản lý: xem đơn nghỉ chờ duyệt trong phạm vi team, tình hình đi muộn, tra cứu quy định, và dữ liệu cá nhân của bạn. Phạm vi team do hệ thống phân quyền.',
-      emptyHint:
-        'Ưu tiên hàng đợi duyệt và đi muộn team; có thể hỏi thêm quy định hoặc chấm công của chính bạn.',
-      quickLabel: 'Gợi ý cho quản lý',
-      placeholder:
-        'Ví dụ: danh sách đơn chờ, đi muộn team, quy định phép, chấm công của tôi…',
-      chips: [
-        { q: 'Danh sách đơn chờ duyệt', label: 'Đơn chờ duyệt' },
-        { q: 'Đi muộn team tháng này', label: 'Đi muộn team' },
-        { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
-        { q: 'Quy định chấm công', label: 'Quy định chấm công' },
-        { q: 'Chấm công hôm nay của tôi', label: 'Chấm công của tôi' },
-        { q: 'Phép năm của tôi còn bao nhiêu ngày?', label: 'Phép năm của tôi' }
-      ]
-    },
-    HR: {
-      head:
-        'Trợ lý hỗ trợ HR: xem đơn nghỉ chờ xử lý, chấm công đi muộn (phạm vi rộng), tra cứu quy định nội bộ và chính sách. Chỉ dùng dữ liệu mà tài khoản được phép xem trên hệ thống.',
-      emptyHint:
-        'Phù hợp duyệt đơn, kiểm tra vi phạm giờ, và trả lời câu hỏi policy — không thay thế quyết định chính thức của HR.',
-      quickLabel: 'Gợi ý cho HR',
-      placeholder:
-        'Ví dụ: đơn chờ duyệt toàn công ty, đi muộn tháng này, quy định phép…',
-      chips: [
-        { q: 'Danh sách đơn chờ duyệt', label: 'Đơn chờ duyệt' },
-        { q: 'Đi muộn team tháng này', label: 'Đi muộn / team' },
-        { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
-        { q: 'Quy định chấm công', label: 'Quy định chấm công' },
-        { q: 'Tóm tắt thông báo', label: 'Tóm tắt thông báo' },
-        { q: 'Chấm công hôm nay của tôi', label: 'Chấm công của tôi (HR)' }
-      ]
-    },
-    ADMIN: {
-      head:
-        'Trợ lý hỗ trợ Admin: tổng quan đơn chờ, chấm công vi phạm giờ, tra cứu policy và dữ liệu theo quyền quản trị. Thao tác nhạy cảm vẫn thực hiện trên màn hình nghiệp vụ chính.',
-      emptyHint:
-        'Dùng gợi ý để lọc nhanh; AI chỉ tóm tắt từ dữ liệu có sẵn, không tự sửa hệ thống.',
-      quickLabel: 'Gợi ý cho Admin',
-      placeholder:
-        'Ví dụ: đơn chờ, đi muộn, quy định công ty, chấm công cá nhân…',
-      chips: [
-        { q: 'Danh sách đơn chờ duyệt', label: 'Đơn chờ duyệt' },
-        { q: 'Đi muộn team tháng này', label: 'Đi muộn / team' },
-        { q: 'Quy định chấm công', label: 'Quy định chấm công' },
-        { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
-        { q: 'Tóm tắt thông báo', label: 'Tóm tắt thông báo' },
-        { q: 'Phép năm của tôi còn bao nhiêu ngày?', label: 'Phép năm (tài khoản tôi)' }
-      ]
-    }
-  };
+      /**
+       * Lịch sử hội thoại — mỗi phần tử { role: 'user'|'model', text: string }.
+       * Được gửi kèm mỗi request để Gemini nhớ ngữ cảnh.
+       * Giới hạn MAX_HISTORY turn gần nhất để tránh payload quá lớn.
+       */
+      var conversationHistory = [];
+      var MAX_HISTORY = 20;   // tối đa 10 turn (5 cặp user+model) — giữ payload nhỏ
+      var MAX_HISTORY_TEXT = 1500; // ký tự tối đa mỗi turn lưu vào history
 
-  function normalizeAssistantRole(role) {
-    var r = String(role || '').trim().toUpperCase();
-    if (r === 'MANAGER' || r === 'HR' || r === 'ADMIN' || r === 'EMPLOYEE') return r;
-    return 'EMPLOYEE';
-  }
-
-  function applyAssistantRole(role) {
-    var key = normalizeAssistantRole(role);
-    var cfg = ASSISTANT_UI[key] || ASSISTANT_UI.EMPLOYEE;
-    if (headDescEl) headDescEl.textContent = cfg.head;
-    if (emptyHintEl) emptyHintEl.textContent = cfg.emptyHint;
-    if (quickLabelEl) quickLabelEl.textContent = cfg.quickLabel;
-    if (input) input.placeholder = cfg.placeholder || '';
-    if (quickChips) {
-      quickChips.innerHTML = '';
-      (cfg.chips || []).forEach(function (c) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'quick-chip';
-        b.setAttribute('data-q', c.q);
-        b.textContent = c.label;
-        b.title = c.q;
-        quickChips.appendChild(b);
-      });
-    }
-  }
-
-  function debugMetaEnabled() {
-    try {
-      return new URLSearchParams(window.location.search).get('debug') === '1';
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function showErr(msg) {
-    errEl.textContent = msg || '';
-    errEl.style.display = msg ? 'block' : 'none';
-  }
-
-  function toastMsg(msg) {
-    toast.textContent = msg;
-    toast.style.display = 'block';
-    setTimeout(function () { toast.style.display = 'none'; }, 3200);
-  }
-
-  function hideEmpty() {
-    if (emptyEl && emptyEl.parentNode) emptyEl.remove();
-  }
-
-  function isMdTableSepLine(line) {
-    var t = String(line || '').trim();
-    if (t.length < 3 || t.indexOf('|') < 0) return false;
-    if (t.indexOf('-') < 0 && t.indexOf(':') < 0) return false;
-    return /^[\s|\-:]+$/.test(t);
-  }
-
-  function mdSplitTableRow(line) {
-    var t = String(line || '').trim();
-    if (t.charAt(0) !== '|') return null;
-    var parts = t.split('|');
-    if (parts.length < 2) return null;
-    return parts.slice(1, parts.length - 1).map(function (c) {
-      return c.trim();
-    });
-  }
-
-  function renderMarkdownTableHtml(lines) {
-    if (!lines || lines.length < 2) return null;
-    var head = mdSplitTableRow(lines[0]);
-    if (!head || head.length === 0) return null;
-    if (!isMdTableSepLine(lines[1])) return null;
-    var bodyRows = [];
-    for (var r = 2; r < lines.length; r++) {
-      var row = mdSplitTableRow(lines[r]);
-      if (row && row.length > 0) bodyRows.push(row);
-    }
-    if (bodyRows.length === 0) return null;
-    var ncol = head.length;
-    function padRow(cells) {
-      var out = cells.slice();
-      while (out.length < ncol) out.push('');
-      return out.slice(0, ncol);
-    }
-    var thead =
-      '<thead><tr>' +
-      head
-        .map(function (h) {
-          return '<th>' + h + '</th>';
-        })
-        .join('') +
-      '</tr></thead>';
-    var tbody =
-      '<tbody>' +
-      bodyRows
-        .map(function (cells) {
-          var pc = padRow(cells);
-          return (
-            '<tr>' +
-            pc
-              .map(function (x) {
-                return '<td>' + x + '</td>';
-              })
-              .join('') +
-            '</tr>'
-          );
-        })
-        .join('') +
-      '</tbody>';
-    return (
-      '<div class="ai-table-wrap"><table class="ai-table">' + thead + tbody + '</table></div>'
-    );
-  }
-
-  /** Tìm bảng GFM (|...| + dòng ---) trong block; có thể có đoạn text phía trước. */
-  function tryMarkdownTableFromBlock(block) {
-    var lines = block.split('\n');
-    var start = -1;
-    for (var i = 0; i < lines.length - 1; i++) {
-      var L = lines[i].trim();
-      if (L.length > 0 && L.charAt(0) === '|' && L.charAt(L.length - 1) === '|') {
-        if (isMdTableSepLine(lines[i + 1])) {
-          start = i;
-          break;
-        }
-      }
-    }
-    if (start < 0) return null;
-    var before = lines.slice(0, start).join('\n').trim();
-    var tableLines = lines.slice(start);
-    var html = renderMarkdownTableHtml(tableLines);
-    if (!html) return null;
-    return { before: before, html: html };
-  }
-
-  /** Escape then light formatting: markdown-ish headings, **bold**, lists, paragraphs */
-  function formatAiReply(raw) {
-    var s = escapeHtml(String(raw || '—'));
-    s = s.split('\n').map(function (line) {
-      var hm = line.match(/^#{1,6}\s+(.+)$/);
-      return hm ? ('<div class="ai-md-heading">' + hm[1] + '</div>') : line;
-    }).join('\n');
-    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    var blocks = s.split(/\n{2,}/);
-    var out = [];
-    for (var b = 0; b < blocks.length; b++) {
-      var block = blocks[b].trim();
-      if (!block) continue;
-      if (/^<div class="ai-md-heading">/.test(block)) {
-        out.push(block);
-        continue;
-      }
-      var tbl = tryMarkdownTableFromBlock(block);
-      if (tbl && tbl.html) {
-        if (tbl.before) {
-          out.push('<p class="ai-p">' + tbl.before.replace(/\n/g, '<br/>') + '</p>');
-        }
-        out.push(tbl.html);
-        continue;
-      }
-      var lines = block.split('\n');
-      var kvLines = [];
-      var other = [];
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        var m = line.match(/^\s*([^:\n]{1,120}):\s*(.*)$/);
-        if (m && m[2] !== undefined && !/^\d+\.\s/.test(line.trim())) {
-          kvLines.push({ label: m[1].trim(), value: m[2].trim() });
-        } else {
-          other.push(line);
-        }
-      }
-      if (kvLines.length >= 2 && other.length === 0) {
-        var rows = kvLines.map(function (kv) {
-          return '<div class="ai-field"><span class="ai-label">' + kv.label + '</span><span class="ai-value">' + kv.value + '</span></div>';
-        }).join('');
-        out.push('<div class="ai-form-block">' + rows + '</div>');
-        continue;
-      }
-      if (kvLines.length === 1 && other.length === 0) {
-        var kv0 = kvLines[0];
-        out.push('<div class="ai-form-block"><div class="ai-field"><span class="ai-label">' + kv0.label + '</span><span class="ai-value">' + kv0.value + '</span></div></div>');
-        continue;
-      }
-      var listLines = [];
-      var rest = [];
-      for (var j = 0; j < lines.length; j++) {
-        var ln = lines[j];
-        var bullet = ln.match(/^\s*[-•*]\s+(.+)$/);
-        var ordered = ln.match(/^\s*\d+[\.)]\s+(.+)$/);
-        if (bullet) listLines.push({ t: 'b', html: bullet[1] });
-        else if (ordered) listLines.push({ t: 'n', html: ordered[1] });
-        else rest.push(ln);
-      }
-      if (listLines.length === lines.length && listLines.length > 0) {
-        var lis = listLines.map(function (x) { return '<li>' + x.html + '</li>'; }).join('');
-        out.push('<ul class="ai-ul">' + lis + '</ul>');
-        continue;
-      }
-      var headMatch = lines[0].match(/^#{1,3}\s+(.+)$/);
-      if (headMatch && lines.length > 1) {
-        out.push('<div class="ai-h">' + headMatch[1] + '</div>');
-        var body = lines.slice(1).join('\n').replace(/\n/g, '<br/>');
-        out.push('<p class="ai-p">' + body + '</p>');
-        continue;
-      }
-      var para = block.replace(/\n/g, '<br/>');
-      out.push('<p class="ai-p">' + para + '</p>');
-    }
-    return '<div class="ai-reply">' + out.join('') + '</div>';
-  }
-
-  function appendBubble(role, html, meta) {
-    hideEmpty();
-    const d = document.createElement('div');
-    d.className = 'bubble ' + (role === 'user' ? 'user' : 'ai');
-    d.innerHTML = html + (meta ? '<div class="meta">' + meta + '</div>' : '');
-    logEl.appendChild(d);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function appendTyping() {
-    hideEmpty();
-    const d = document.createElement('div');
-    d.className = 'bubble ai';
-    d.id = 'ai-typing-bubble';
-    d.innerHTML = '<div class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></div>';
-    d.setAttribute('aria-busy', 'true');
-    logEl.appendChild(d);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function removeTyping() {
-    var t = document.getElementById('ai-typing-bubble');
-    if (t) t.remove();
-  }
-
-  function autoResize() {
-    input.style.height = 'auto';
-    var h = Math.min(input.scrollHeight, 160);
-    input.style.height = h + 'px';
-  }
-
-  function setQuickChipsDisabled(disabled) {
-    if (!quickChips) return;
-    quickChips.querySelectorAll('.quick-chip').forEach(function (b) {
-      b.disabled = !!disabled;
-    });
-  }
-
-  async function send() {
-    const token = HRMFrags.getToken();
-    if (!token) {
-      HRMFrags.redirectLogin();
-      return;
-    }
-    const text = (input.value || '').trim();
-    if (!text) return;
-    showErr('');
-    appendBubble('user', escapeHtml(text).replace(/\n/g, '<br/>'), '');
-    input.value = '';
-    autoResize();
-    sendBtn.disabled = true;
-    setQuickChipsDisabled(true);
-    appendTyping();
-    try {
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
+      /**
+       * Mô tả + câu mẫu theo role (khớp intent classifier / RBAC backend).
+       */
+      var ASSISTANT_UI = {
+        EMPLOYEE: {
+          head:
+            'Trợ lý giúp bạn xem chấm công, phép, thông báo và đọc quy định nội bộ. Chỉ truy cập dữ liệu của chính bạn — không đưa mật khẩu lên đây.',
+          emptyHint:
+            'Dùng gợi ý bên dưới hoặc gõ câu hỏi. Trả lời dựa trên dữ liệu và policy trong phạm vi nhân viên.',
+          quickLabel: 'Gợi ý cho nhân viên',
+          placeholder: 'Ví dụ: quy định nghỉ phép, chấm công hôm nay, tóm tắt thông báo…',
+          chips: [
+            { q: 'Quy định chấm công', label: 'Quy định chấm công' },
+            { q: 'Chấm công hôm nay của tôi', label: 'Chấm công hôm nay' },
+            { q: 'Phép năm của tôi còn bao nhiêu ngày?', label: 'Phép năm của tôi' },
+            { q: 'Tóm tắt thông báo', label: 'Tóm tắt thông báo' },
+            { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
+            { q: 'Thông báo gần đây của tôi', label: 'Thông báo gần đây' }
+          ]
         },
-        body: JSON.stringify({ message: text })
-      });
-      removeTyping();
-      if (res.status === 401) {
-        HRMFrags.redirectLogin();
-        return;
+        MANAGER: {
+          head:
+            'Trợ lý hỗ trợ quản lý: xem đơn nghỉ chờ duyệt trong phạm vi team, tình hình đi muộn, tra cứu quy định, và dữ liệu cá nhân của bạn. Phạm vi team do hệ thống phân quyền.',
+          emptyHint:
+            'Ưu tiên hàng đợi duyệt và đi muộn team; có thể hỏi thêm quy định hoặc chấm công của chính bạn.',
+          quickLabel: 'Gợi ý cho quản lý',
+          placeholder:
+            'Ví dụ: danh sách đơn chờ, đi muộn team, quy định phép, chấm công của tôi…',
+          chips: [
+            { q: 'Danh sách đơn chờ duyệt', label: 'Đơn chờ duyệt' },
+            { q: 'Đi muộn team tháng này', label: 'Đi muộn team' },
+            { q: 'Thống kê nhân sự tháng này', label: 'Thống kê tổng quan' },
+            { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
+            { q: 'Quy định chấm công', label: 'Quy định chấm công' },
+            { q: 'Chấm công hôm nay của tôi', label: 'Chấm công của tôi' },
+            { q: 'Phép năm của tôi còn bao nhiêu ngày?', label: 'Phép năm của tôi' }
+          ]
+        },
+        HR: {
+          head:
+            'Trợ lý hỗ trợ HR: xem đơn nghỉ chờ xử lý, chấm công đi muộn (phạm vi rộng), tra cứu quy định nội bộ và chính sách. Chỉ dùng dữ liệu mà tài khoản được phép xem trên hệ thống.',
+          emptyHint:
+            'Phù hợp duyệt đơn, kiểm tra vi phạm giờ, và trả lời câu hỏi policy — không thay thế quyết định chính thức của HR.',
+          quickLabel: 'Gợi ý cho HR',
+          placeholder:
+            'Ví dụ: đơn chờ duyệt toàn công ty, đi muộn tháng này, quy định phép…',
+          chips: [
+            { q: 'Danh sách đơn chờ duyệt', label: 'Đơn chờ duyệt' },
+            { q: 'Đi muộn team tháng này', label: 'Đi muộn / team' },
+            { q: 'Thống kê nhân sự tháng này', label: 'Thống kê tổng quan' },
+            { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
+            { q: 'Quy định chấm công', label: 'Quy định chấm công' },
+            { q: 'Tóm tắt thông báo', label: 'Tóm tắt thông báo' },
+            { q: 'Chấm công hôm nay của tôi', label: 'Chấm công của tôi (HR)' }
+          ]
+        },
+        ADMIN: {
+          head:
+            'Trợ lý hỗ trợ Admin: tổng quan đơn chờ, chấm công vi phạm giờ, tra cứu policy và dữ liệu theo quyền quản trị. Thao tác nhạy cảm vẫn thực hiện trên màn hình nghiệp vụ chính.',
+          emptyHint:
+            'Dùng gợi ý để lọc nhanh; AI chỉ tóm tắt từ dữ liệu có sẵn, không tự sửa hệ thống.',
+          quickLabel: 'Gợi ý cho Admin',
+          placeholder:
+            'Ví dụ: đơn chờ, đi muộn, quy định công ty, chấm công cá nhân…',
+          chips: [
+            { q: 'Danh sách đơn chờ duyệt', label: 'Đơn chờ duyệt' },
+            { q: 'Đi muộn team tháng này', label: 'Đi muộn / team' },
+            { q: 'Thống kê nhân sự tháng này', label: 'Thống kê tổng quan' },
+            { q: 'Quy định chấm công', label: 'Quy định chấm công' },
+            { q: 'Quy định nghỉ phép', label: 'Quy định nghỉ phép' },
+            { q: 'Tóm tắt thông báo', label: 'Tóm tắt thông báo' },
+            { q: 'Phép năm của tôi còn bao nhiêu ngày?', label: 'Phép năm (tài khoản tôi)' }
+          ]
+        }
+      };
+
+      function normalizeAssistantRole(role) {
+        var r = String(role || '').trim().toUpperCase();
+        if (r === 'MANAGER' || r === 'HR' || r === 'ADMIN' || r === 'EMPLOYEE') return r;
+        return 'EMPLOYEE';
       }
-      const data = await res.json().catch(function () { return null; });
-      if (!res.ok) {
-        var msg = (data && data.message) ? data.message : ('Lỗi ' + res.status);
-        showErr(msg);
-        toastMsg(msg);
-        return;
-      }
-      var replyHtml = formatAiReply(data.reply);
-      var meta = '';
-      if (debugMetaEnabled()) {
-        meta = 'intent: ' + (data.intent || '—');
-        if (data.fallback) meta += ' · fallback';
-        if (data.citations && data.citations.length) {
-          meta += ' · citations: ' + data.citations.map(function (c) { return c.source; }).join(', ');
+
+      function applyAssistantRole(role) {
+        var key = normalizeAssistantRole(role);
+        var cfg = ASSISTANT_UI[key] || ASSISTANT_UI.EMPLOYEE;
+        if (headDescEl) headDescEl.textContent = cfg.head;
+        if (emptyHintEl) emptyHintEl.textContent = cfg.emptyHint;
+        if (quickLabelEl) quickLabelEl.textContent = cfg.quickLabel;
+        if (input) input.placeholder = cfg.placeholder || '';
+        if (quickChips) {
+          quickChips.innerHTML = '';
+          (cfg.chips || []).forEach(function (c) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'quick-chip';
+            b.setAttribute('data-q', c.q);
+            b.textContent = c.label;
+            b.title = c.q;
+            quickChips.appendChild(b);
+          });
         }
       }
-      appendBubble('ai', replyHtml, meta);
-    } catch (e) {
-      removeTyping();
-      showErr('Không gọi được API.');
-      toastMsg('Lỗi mạng');
-    } finally {
-      sendBtn.disabled = false;
-      setQuickChipsDisabled(false);
-    }
-  }
 
-  function escapeHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
+      function debugMetaEnabled() {
+        try {
+          return new URLSearchParams(window.location.search).get('debug') === '1';
+        } catch (e) {
+          return false;
+        }
+      }
 
-  document.addEventListener('hrm:frags-ready', function (e) {
-    if (!HRMFrags.getToken()) {
-      HRMFrags.redirectLogin();
-      return;
-    }
-    var r = e && e.detail && e.detail.role;
-    if (!r) {
-      var u = HRMFrags.getUser();
-      r = u && u.role;
-    }
-    applyAssistantRole(r);
-  });
+      function showErr(msg) {
+        errEl.textContent = msg || '';
+        errEl.style.display = msg ? 'block' : 'none';
+      }
 
-  (function initAssistantRoleUi() {
-    var u = HRMFrags.getUser();
-    if (u && u.role) {
-      applyAssistantRole(u.role);
-    } else {
-      applyAssistantRole('EMPLOYEE');
-    }
-  })();
+      function toastMsg(msg) {
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        setTimeout(function () { toast.style.display = 'none'; }, 3200);
+      }
 
-  sendBtn.addEventListener('click', send);
-  if (quickChips) {
-    quickChips.addEventListener('click', function (e) {
-      var btn = e.target.closest('.quick-chip');
-      if (!btn || btn.disabled) return;
-      var q = btn.getAttribute('data-q');
-      if (!q) return;
-      input.value = q;
+      function hideEmpty() {
+        if (emptyEl && emptyEl.parentNode) emptyEl.remove();
+      }
+
+      function isMdTableSepLine(line) {
+        var t = String(line || '').trim();
+        if (t.length < 3 || t.indexOf('|') < 0) return false;
+        if (t.indexOf('-') < 0 && t.indexOf(':') < 0) return false;
+        return /^[\s|\-:]+$/.test(t);
+      }
+
+      function mdSplitTableRow(line) {
+        var t = String(line || '').trim();
+        if (t.charAt(0) !== '|') return null;
+        var parts = t.split('|');
+        if (parts.length < 2) return null;
+        return parts.slice(1, parts.length - 1).map(function (c) {
+          return c.trim();
+        });
+      }
+
+      function renderMarkdownTableHtml(lines) {
+        if (!lines || lines.length < 2) return null;
+        var head = mdSplitTableRow(lines[0]);
+        if (!head || head.length === 0) return null;
+        if (!isMdTableSepLine(lines[1])) return null;
+        var bodyRows = [];
+        for (var r = 2; r < lines.length; r++) {
+          var row = mdSplitTableRow(lines[r]);
+          if (row && row.length > 0) bodyRows.push(row);
+        }
+        if (bodyRows.length === 0) return null;
+        var ncol = head.length;
+        function padRow(cells) {
+          var out = cells.slice();
+          while (out.length < ncol) out.push('');
+          return out.slice(0, ncol);
+        }
+        var thead =
+          '<thead><tr>' +
+          head
+            .map(function (h) {
+              return '<th>' + h + '</th>';
+            })
+            .join('') +
+          '</tr></thead>';
+        var tbody =
+          '<tbody>' +
+          bodyRows
+            .map(function (cells) {
+              var pc = padRow(cells);
+              return (
+                '<tr>' +
+                pc
+                  .map(function (x) {
+                    return '<td>' + x + '</td>';
+                  })
+                  .join('') +
+                '</tr>'
+              );
+            })
+            .join('') +
+          '</tbody>';
+        return (
+          '<div class="ai-table-wrap"><table class="ai-table">' + thead + tbody + '</table></div>'
+        );
+      }
+
+      /** Tìm bảng GFM (|...| + dòng ---) trong block; có thể có đoạn text phía trước. */
+      function tryMarkdownTableFromBlock(block) {
+        var lines = block.split('\n');
+        var start = -1;
+        for (var i = 0; i < lines.length - 1; i++) {
+          var L = lines[i].trim();
+          if (L.length > 0 && L.charAt(0) === '|' && L.charAt(L.length - 1) === '|') {
+            if (isMdTableSepLine(lines[i + 1])) {
+              start = i;
+              break;
+            }
+          }
+        }
+        if (start < 0) return null;
+        var before = lines.slice(0, start).join('\n').trim();
+        var tableLines = lines.slice(start);
+        var html = renderMarkdownTableHtml(tableLines);
+        if (!html) return null;
+        return { before: before, html: html };
+      }
+
+      /** Escape then light formatting: markdown-ish headings, **bold**, lists, paragraphs */
+      function formatAiReply(raw) {
+        var s = escapeHtml(String(raw || '—'));
+        s = s.split('\n').map(function (line) {
+          var hm = line.match(/^#{1,6}\s+(.+)$/);
+          return hm ? ('<div class="ai-md-heading">' + hm[1] + '</div>') : line;
+        }).join('\n');
+        s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        var blocks = s.split(/\n{2,}/);
+        var out = [];
+        for (var b = 0; b < blocks.length; b++) {
+          var block = blocks[b].trim();
+          if (!block) continue;
+          if (/^<div class="ai-md-heading">/.test(block)) {
+            out.push(block);
+            continue;
+          }
+          var tbl = tryMarkdownTableFromBlock(block);
+          if (tbl && tbl.html) {
+            if (tbl.before) {
+              out.push('<p class="ai-p">' + tbl.before.replace(/\n/g, '<br/>') + '</p>');
+            }
+            out.push(tbl.html);
+            continue;
+          }
+          var lines = block.split('\n');
+          var kvLines = [];
+          var other = [];
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            var m = line.match(/^\s*([^:\n]{1,120}):\s*(.*)$/);
+            if (m && m[2] !== undefined && !/^\d+\.\s/.test(line.trim())) {
+              kvLines.push({ label: m[1].trim(), value: m[2].trim() });
+            } else {
+              other.push(line);
+            }
+          }
+          if (kvLines.length >= 2 && other.length === 0) {
+            var rows = kvLines.map(function (kv) {
+              return '<div class="ai-field"><span class="ai-label">' + kv.label + '</span><span class="ai-value">' + kv.value + '</span></div>';
+            }).join('');
+            out.push('<div class="ai-form-block">' + rows + '</div>');
+            continue;
+          }
+          if (kvLines.length === 1 && other.length === 0) {
+            var kv0 = kvLines[0];
+            out.push('<div class="ai-form-block"><div class="ai-field"><span class="ai-label">' + kv0.label + '</span><span class="ai-value">' + kv0.value + '</span></div></div>');
+            continue;
+          }
+          var listLines = [];
+          var rest = [];
+          for (var j = 0; j < lines.length; j++) {
+            var ln = lines[j];
+            var bullet = ln.match(/^\s*[-•*]\s+(.+)$/);
+            var ordered = ln.match(/^\s*\d+[\.)]\s+(.+)$/);
+            if (bullet) listLines.push({ t: 'b', html: bullet[1] });
+            else if (ordered) listLines.push({ t: 'n', html: ordered[1] });
+            else rest.push(ln);
+          }
+          if (listLines.length === lines.length && listLines.length > 0) {
+            var lis = listLines.map(function (x) { return '<li>' + x.html + '</li>'; }).join('');
+            out.push('<ul class="ai-ul">' + lis + '</ul>');
+            continue;
+          }
+          var headMatch = lines[0].match(/^#{1,3}\s+(.+)$/);
+          if (headMatch && lines.length > 1) {
+            out.push('<div class="ai-h">' + headMatch[1] + '</div>');
+            var body = lines.slice(1).join('\n').replace(/\n/g, '<br/>');
+            out.push('<p class="ai-p">' + body + '</p>');
+            continue;
+          }
+          var para = block.replace(/\n/g, '<br/>');
+          out.push('<p class="ai-p">' + para + '</p>');
+        }
+        return '<div class="ai-reply">' + out.join('') + '</div>';
+      }
+
+      function appendBubble(role, html, meta) {
+        hideEmpty();
+        const d = document.createElement('div');
+        d.className = 'bubble ' + (role === 'user' ? 'user' : 'ai');
+        d.innerHTML = html + (meta ? '<div class="meta">' + meta + '</div>' : '');
+        logEl.appendChild(d);
+        logEl.scrollTop = logEl.scrollHeight;
+        return d;  // trả về element để caller xóa nếu cần
+      }
+
+      function appendTyping() {
+        hideEmpty();
+        const d = document.createElement('div');
+        d.className = 'bubble ai';
+        d.id = 'ai-typing-bubble';
+        d.innerHTML = '<div class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></div>';
+        d.setAttribute('aria-busy', 'true');
+        logEl.appendChild(d);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function removeTyping() {
+        var t = document.getElementById('ai-typing-bubble');
+        if (t) t.remove();
+      }
+
+      function autoResize() {
+        input.style.height = 'auto';
+        var h = Math.min(input.scrollHeight, 160);
+        input.style.height = h + 'px';
+      }
+
+      function setQuickChipsDisabled(disabled) {
+        if (!quickChips) return;
+        quickChips.querySelectorAll('.quick-chip').forEach(function (b) {
+          b.disabled = !!disabled;
+        });
+      }
+
+      async function send() {
+        // Guard: không gửi nếu đang chờ phản hồi
+        if (sendBtn.disabled) return;
+
+        const token = HRMFrags.getToken();
+        if (!token) {
+          HRMFrags.redirectLogin();
+          return;
+        }
+        const text = (input.value || '').trim();
+        if (!text) return;
+        showErr('');
+
+        // Thêm user bubble vào UI
+        var userBubble = appendBubble('user', escapeHtml(text).replace(/\n/g, '<br/>'), '');
+        input.value = '';
+        autoResize();
+        sendBtn.disabled = true;
+        setQuickChipsDisabled(true);
+        appendTyping();
+        try {
+          // Lấy snapshot history trước khi gửi (chưa gồm message hiện tại)
+          var historySnapshot = conversationHistory.slice(-MAX_HISTORY);
+          const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+              message: text,
+              history: historySnapshot.length > 0 ? historySnapshot : undefined
+            })
+          });
+          removeTyping();
+
+          // Redirect login nếu token hết hạn / không xác thực
+          if (res.status === 401 || res.status === 403) {
+            if (userBubble && userBubble.parentNode) userBubble.remove();
+            HRMFrags.redirectLogin();
+            return;
+          }
+
+          const data = await res.json().catch(function () { return null; });
+
+          // Kiểm tra lỗi auth ẩn trong body (Spring Boot 4 có thể trả 400 cho token hết hạn)
+          if (!res.ok) {
+            var rawMsg = (data && data.message) ? data.message : ('Lỗi ' + res.status);
+            var lowerMsg = rawMsg.toLowerCase();
+            var isAuthErr = lowerMsg.includes('username') || lowerMsg.includes('password')
+              || lowerMsg.includes('unauthorized') || lowerMsg.includes('token')
+              || lowerMsg.includes('expired') || lowerMsg.includes('authentication');
+            if (userBubble && userBubble.parentNode) userBubble.remove();
+            if (isAuthErr) {
+              HRMFrags.redirectLogin();
+            } else {
+              showErr(rawMsg);
+              toastMsg(rawMsg);
+            }
+            return;
+          }
+
+          var replyHtml = formatAiReply(data.reply);
+          var meta = '';
+          if (debugMetaEnabled()) {
+            meta = 'intent: ' + (data.intent || '—');
+            if (data.fallback) meta += ' · fallback';
+            if (data.citations && data.citations.length) {
+              meta += ' · citations: ' + data.citations.map(function (c) { return c.source; }).join(', ');
+            }
+            meta += ' · turns: ' + (historySnapshot.length / 2 | 0);
+          }
+          appendBubble('ai', replyHtml, meta);
+          // Ghi nhận turn vào history sau khi thành công
+          // Truncate text để tránh payload quá lớn → 400 khi gửi lên server
+          var userTextForHistory = text.length > MAX_HISTORY_TEXT
+            ? text.substring(0, MAX_HISTORY_TEXT) : text;
+          var modelTextForHistory = (data.reply || '').length > MAX_HISTORY_TEXT
+            ? (data.reply || '').substring(0, MAX_HISTORY_TEXT) : (data.reply || '');
+          conversationHistory.push({ role: 'user', text: userTextForHistory });
+          conversationHistory.push({ role: 'model', text: modelTextForHistory });
+          // Giữ tối đa MAX_HISTORY entries
+          if (conversationHistory.length > MAX_HISTORY) {
+            conversationHistory = conversationHistory.slice(conversationHistory.length - MAX_HISTORY);
+          }
+        } catch (e) {
+          removeTyping();
+          if (userBubble && userBubble.parentNode) userBubble.remove();
+          showErr('Không gọi được API.');
+          toastMsg('Lỗi mạng');
+        } finally {
+          sendBtn.disabled = false;
+          setQuickChipsDisabled(false);
+        }
+      }
+
+      function newChat() {
+        conversationHistory = [];
+        // Xóa toàn bộ bubble và khôi phục màn hình trống
+        while (logEl.firstChild) logEl.removeChild(logEl.firstChild);
+        var emptyDiv = document.createElement('div');
+        emptyDiv.className = 'ai-empty';
+        emptyDiv.id = 'ai-empty';
+        emptyDiv.innerHTML = '<strong>Bắt đầu hội thoại</strong><span id="assistant-empty-hint">' +
+          (emptyHintEl ? emptyHintEl.textContent : 'Chọn gợi ý nhanh hoặc gõ câu hỏi.') + '</span>';
+        logEl.appendChild(emptyDiv);
+        showErr('');
+        input.focus();
+        toastMsg('Đã bắt đầu cuộc hội thoại mới.');
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      document.addEventListener('hrm:frags-ready', function (e) {
+        if (!HRMFrags.getToken()) {
+          HRMFrags.redirectLogin();
+          return;
+        }
+        var r = e && e.detail && e.detail.role;
+        if (!r) {
+          var u = HRMFrags.getUser();
+          r = u && u.role;
+        }
+        applyAssistantRole(r);
+      });
+
+      (function initAssistantRoleUi() {
+        var u = HRMFrags.getUser();
+        if (u && u.role) {
+          applyAssistantRole(u.role);
+        } else {
+          applyAssistantRole('EMPLOYEE');
+        }
+      })();
+
+      sendBtn.addEventListener('click', send);
+      if (btnNewChat) {
+        btnNewChat.addEventListener('click', newChat);
+      }
+      if (quickChips) {
+        quickChips.addEventListener('click', function (e) {
+          var btn = e.target.closest('.quick-chip');
+          if (!btn || btn.disabled) return;
+          var q = btn.getAttribute('data-q');
+          if (!q) return;
+          input.value = q;
+          autoResize();
+          send();
+        });
+      }
+      input.addEventListener('input', autoResize);
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          send();
+        }
+      });
+
       autoResize();
-      send();
-    });
-  }
-  input.addEventListener('input', autoResize);
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
-  });
-
-  autoResize();
-})();
-</script>
+    })();
+  </script>
 </body>
+
 </html>

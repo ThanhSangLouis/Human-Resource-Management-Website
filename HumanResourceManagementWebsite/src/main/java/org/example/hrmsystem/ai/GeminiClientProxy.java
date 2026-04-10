@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,8 +42,20 @@ public class GeminiClientProxy {
             String userPayload,
             boolean hasConversationHistory
     ) {
+        return generate(systemInstruction, userPayload, hasConversationHistory, List.of());
+    }
+
+    /**
+     * Gọi Gemini kèm history. Cache bị bỏ qua khi {@code hasConversationHistory} là {@code true}.
+     */
+    public Optional<String> generate(
+            String systemInstruction,
+            String userPayload,
+            boolean hasConversationHistory,
+            List<Map<String, String>> history
+    ) {
         if (!cacheEnabled || hasConversationHistory || !delegate.isConfigured()) {
-            return delegate.generateContent(systemInstruction, userPayload);
+            return delegate.generateContent(systemInstruction, userPayload, history);
         }
         String key = sha256(systemInstruction + "\n" + userPayload);
         Instant now = Instant.now();
@@ -53,7 +66,8 @@ public class GeminiClientProxy {
         if (hit != null) {
             cache.remove(key);
         }
-        Optional<String> out = delegate.generateContent(systemInstruction, userPayload);
+        // Single-turn — không history
+        Optional<String> out = delegate.generateContent(systemInstruction, userPayload, List.of());
         out.ifPresent(text -> put(key, text, now));
         return out;
     }
