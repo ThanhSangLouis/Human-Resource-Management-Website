@@ -164,29 +164,40 @@
       flex-wrap: wrap;
     }
     .search-box {
-      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
       flex: 1;
       min-width: 200px;
       max-width: 300px;
-    }
-    .search-box input {
-      width: 100%;
-      padding: 9px 12px 9px 36px;
+      padding: 0 12px 0 14px;
       border: 1px solid #dde2ee;
       border-radius: 8px;
-      font-size: 13.5px;
       background: #fff;
+      transition: border-color .2s;
+      box-sizing: border-box;
+    }
+    .search-box:focus-within { border-color: #2c3e8c; }
+    .search-box-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #8a94a6;
+      pointer-events: none;
+    }
+    .search-box input {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      border: none;
+      padding: 9px 0;
+      font-size: 13.5px;
+      background: transparent;
       color: #1a2035;
       outline: none;
-      transition: border-color .2s;
     }
-    .search-box input:focus { border-color: #2c3e8c; }
-    .search-box svg {
-      position: absolute;
-      left: 10px; top: 50%;
-      transform: translateY(-50%);
-      color: #8a94a6;
-    }
+    .search-box input::placeholder { color: #8a94a6; }
 
     /* ──────────── CARD / TABLE ──────────── */
     .card {
@@ -541,11 +552,13 @@
 
     <!-- Toolbar -->
     <div class="toolbar">
-      <div class="search-box">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input type="text" id="search-input" placeholder="Tìm tên phòng ban..." oninput="onSearch()" />
+      <div class="search-box" role="search">
+        <span class="search-box-icon" aria-hidden="true">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </span>
+        <input type="text" id="search-input" placeholder="Tìm tên phòng ban..." autocomplete="off" oninput="onSearch()" />
       </div>
     </div>
 

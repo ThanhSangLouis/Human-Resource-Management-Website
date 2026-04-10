@@ -58,10 +58,11 @@ public class LeaveRequestController {
     }
 
     /**
-     * Đơn nghỉ APPROVED giao với tháng/ngày — phạm vi theo role (giống lịch sử chấm công).
-     * {@code departmentId}: chỉ ADMIN/HR.
+     * Đơn nghỉ APPROVED theo tháng/ngày — MANAGER: NV thuộc phòng quản lý; ADMIN/HR: toàn công ty (lọc phòng tuỳ chọn).
+     * EMPLOYEE không được gọi (chỉ xem đơn của mình qua {@code /my}).
      */
     @GetMapping("/approved")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','MANAGER')")
     public ResponseEntity<?> listApproved(
             @AuthenticationPrincipal AppUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,

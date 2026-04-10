@@ -164,8 +164,8 @@ public class LeaveRequestService {
     }
 
     /**
-     * Đơn APPROVED giao với khoảng tháng/ngày — phạm vi giống lịch sử chấm công.
-     * {@code departmentId} chỉ ADMIN/HR.
+     * Đơn APPROVED theo khoảng tháng/ngày — MANAGER: NV thuộc phòng quản lý; ADMIN/HR: tất cả (hoặc lọc {@code departmentId}).
+     * EMPLOYEE không dùng API này (dùng {@link #getMyLeaves}).
      */
     public Map<String, Object> listApprovedLeaves(
             AppUserDetails user,
@@ -204,14 +204,8 @@ public class LeaveRequestService {
         Page<LeaveRequest> pageResult;
 
         switch (role) {
-            case EMPLOYEE -> {
-                if (actorKey == null) {
-                    pageResult = Page.empty(pageable);
-                } else {
-                    pageResult = leaveRequestRepository.findApprovedOverlappingForEmployee(
-                            LeaveStatus.APPROVED, actorKey, rangeStart, rangeEnd, pageable);
-                }
-            }
+            case EMPLOYEE -> throw new AccessDeniedException(
+                    "Nhân viên không xem được danh sách đơn nghỉ đã duyệt toàn hệ thống — chỉ dùng mục Đơn của tôi.");
             case MANAGER -> {
                 Set<Long> visible = managerEmployeeScopeService.visibleEmployeeIdsForManager(actorKey);
                 if (visible.isEmpty()) {

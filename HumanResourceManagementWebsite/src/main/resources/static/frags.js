@@ -57,6 +57,7 @@
     if (path === '/overview' || path === '/overview.html' ||
         path === '/dashboard' || path === '/dashboard.html') return 'overview';
     if (path.includes('employees'))   return 'employees';
+    if (path.includes('admin-users')) return 'admin-users';
     if (path.includes('departments')) return 'departments';
     if (path.includes('payroll'))     return 'payroll';
     if (path.includes('performance')) return 'performance';
@@ -84,35 +85,6 @@
       el.innerHTML = '<div style="padding:12px 20px;color:#b91c1c;font-size:13px;">Lỗi tải menu trên. Hãy chạy lại server và Ctrl+F5. (' + (err && err.message ? err.message : err) + ')</div>';
       return;
     }
-
-    const path = window.location.pathname;
-    const hash = window.location.hash;
-    const currentNav = resolveCurrentNav();
-
-    function roleAllowedTop(allowedAttr, userRole) {
-      if (!allowedAttr || !String(allowedAttr).trim()) return true;
-      if (!userRole) return false;
-      const list = String(allowedAttr).split(',').map(function (r) { return r.trim().toUpperCase(); });
-      return list.indexOf(userRole) >= 0;
-    }
-
-    el.querySelectorAll('.topbar-nav a').forEach(function (a) {
-      if (a.dataset.nav) {
-        if (a.dataset.nav === currentNav) a.classList.add('active');
-        const allowed = a.dataset.roles;
-        if (allowed && !roleAllowedTop(allowed, role)) {
-          a.style.display = 'none';
-        }
-      } else {
-        var h = a.getAttribute('href');
-        if (h === '/overview' && (path === '/overview' || path === '/overview.html')) {
-          a.classList.add('active');
-        }
-        if (h === '/overview' && (path === '/dashboard' || path === '/dashboard.html')) {
-          a.classList.add('active');
-        }
-      }
-    });
 
     /* Fill user info */
     const username = user ? (user.username || '–') : '–';
@@ -149,6 +121,32 @@
         link.style.display = 'none';
       }
     });
+  }
+
+  /** EMPLOYEE: không vào dashboard / phòng ban / nhân viên / lương / đánh giá (chỉ chấm công & nghỉ phép & hồ sơ). */
+  function redirectIfPageForbidden(pathname, roleUpper) {
+    if (!HRMFrags.getToken() || !roleUpper) return true;
+    var p = (pathname || '').toLowerCase();
+    if (p.indexOf('login') >= 0) return true;
+    if (p.indexOf('payroll') >= 0 && ['ADMIN', 'HR'].indexOf(roleUpper) < 0) {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    if ((p.indexOf('/overview') >= 0 || p.indexOf('overview.html') >= 0 || p.indexOf('/dashboard') >= 0)
+        && ['ADMIN', 'HR', 'MANAGER'].indexOf(roleUpper) < 0) {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    if ((p.indexOf('departments') >= 0 || p.indexOf('employees') >= 0 || p.indexOf('performance') >= 0)
+        && ['ADMIN', 'HR', 'MANAGER'].indexOf(roleUpper) < 0) {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    if (p.indexOf('admin-users') >= 0 && roleUpper !== 'ADMIN') {
+      window.location.replace('/worktime.html#attendance');
+      return false;
+    }
+    return true;
   }
 
   /* ── Boot ───────────────────────────────────────────────────────────────── */

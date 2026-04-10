@@ -48,7 +48,7 @@ public class AuthService {
 
     @Transactional
     public LoginResult login(LoginRequest request) {
-        String username = request.getUsername() == null ? "" : request.getUsername().trim();
+        String username = request.getUsername() == null ? "" : request.getUsername().trim().toLowerCase();
         UserAccount account = userAccountRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.warn("Login failed: username [{}] not found", username);
