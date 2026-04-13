@@ -1,12 +1,14 @@
 package org.example.hrmsystem.repository;
 
 import org.example.hrmsystem.model.Attendance;
+import org.example.hrmsystem.model.AttendanceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -48,5 +50,32 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>, J
             @Param("from") LocalDate from,
             @Param("to") LocalDate to,
             @Param("empIds") Collection<Long> empIds
+    );
+
+    long countByEmployeeIdAndAttendanceDateBetweenAndStatus(
+            Long employeeId,
+            LocalDate from,
+            LocalDate to,
+            AttendanceStatus status
+    );
+
+    @Query("""
+            SELECT COALESCE(SUM(a.workHours), 0) FROM Attendance a
+            WHERE a.employeeId = :employeeId AND a.attendanceDate BETWEEN :from AND :to
+            """)
+    BigDecimal sumWorkHoursInRangeForEmployee(
+            @Param("employeeId") Long employeeId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to
+    );
+
+    @Query("""
+            SELECT COALESCE(SUM(a.overtimeHours), 0) FROM Attendance a
+            WHERE a.employeeId = :employeeId AND a.attendanceDate BETWEEN :from AND :to
+            """)
+    BigDecimal sumOvertimeHoursInRangeForEmployee(
+            @Param("employeeId") Long employeeId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to
     );
 }

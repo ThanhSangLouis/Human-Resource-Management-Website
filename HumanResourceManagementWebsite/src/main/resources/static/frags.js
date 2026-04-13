@@ -16,13 +16,6 @@
   const USER_KEY    = 'hrm_user';
   const REFRESH_KEY = 'hrm_refresh_token';
 
-  /** Chuẩn hóa role từ localStorage / API (hỗ trợ cả ROLE_EMPLOYEE nếu có). */
-  function normalizeRole(r) {
-    var s = String(r || '').trim().toUpperCase();
-    if (s.indexOf('ROLE_') === 0) s = s.substring(5);
-    return s;
-  }
-
   const HRMFrags = {
     getToken() { return localStorage.getItem(TOKEN_KEY); },
 
@@ -71,6 +64,7 @@
     if (path.includes('worktime') || path.includes('attendance')) {
       return hash === '#leave' ? 'leave' : 'attendance';
     }
+    if (path.includes('assistant')) return 'assistant';
     return '';
   }
 
@@ -116,15 +110,15 @@
     function roleAllowed(allowedAttr, userRole) {
       if (!allowedAttr || !String(allowedAttr).trim()) return true;
       if (!userRole) return false;
-      const list = String(allowedAttr).split(',').map(function (r) { return normalizeRole(r); });
+      const list = String(allowedAttr).split(',').map(function (r) { return r.trim().toUpperCase(); });
       return list.indexOf(userRole) >= 0;
     }
 
     el.querySelectorAll('[data-nav]').forEach(function (link) {
       if (link.dataset.nav === currentNav) link.classList.add('active');
-      var allowed = link.getAttribute('data-roles');
+      const allowed = link.dataset.roles;
       if (allowed && !roleAllowed(allowed, role)) {
-        link.remove();
+        link.style.display = 'none';
       }
     });
   }
@@ -158,11 +152,7 @@
   /* ── Boot ───────────────────────────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', async function () {
     const user = HRMFrags.getUser();
-    const role = normalizeRole(user && user.role);
-
-    if (!redirectIfPageForbidden(window.location.pathname, role)) {
-      return;
-    }
+    const role = user ? String(user.role || '').trim().toUpperCase() : '';
 
     await Promise.all([
       injectTopbar(user, role),

@@ -15,15 +15,11 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
@@ -37,7 +33,6 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
-    private final TaskExecutor notificationTaskExecutor;
     private final PlatformTransactionManager transactionManager;
     private TransactionTemplate requiresNewTemplate;
 
@@ -51,12 +46,10 @@ public class NotificationService {
     public NotificationService(
             NotificationRepository notificationRepository,
             ObjectProvider<JavaMailSender> mailSenderProvider,
-            @Qualifier("notificationTaskExecutor") TaskExecutor notificationTaskExecutor,
             PlatformTransactionManager transactionManager
     ) {
         this.notificationRepository = notificationRepository;
         this.mailSenderProvider = mailSenderProvider;
-        this.notificationTaskExecutor = notificationTaskExecutor;
         this.transactionManager = transactionManager;
     }
 
@@ -70,6 +63,11 @@ public class NotificationService {
     public Page<NotificationResponse> listForEmployee(Long employeeId, Pageable pageable) {
         return notificationRepository.findByEmployeeIdOrderByCreatedAtDesc(employeeId, pageable)
                 .map(this::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public long countUnreadForEmployee(Long employeeId) {
+        return notificationRepository.countByEmployeeIdAndReadFlagFalse(employeeId);
     }
 
     @Transactional
