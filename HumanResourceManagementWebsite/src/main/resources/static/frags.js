@@ -54,6 +54,7 @@
   function resolveCurrentNav() {
     const path = window.location.pathname;
     const hash = window.location.hash;
+    if (path.includes('profile')) return 'profile';
     if (path === '/overview' || path === '/overview.html' ||
         path === '/dashboard' || path === '/dashboard.html') return 'overview';
     if (path.includes('employees'))   return 'employees';
@@ -121,6 +122,18 @@
         link.style.display = 'none';
       }
     });
+
+    const changePasswordLink = el.querySelector('[data-action="change-password"]');
+    if (changePasswordLink) {
+      changePasswordLink.addEventListener('click', function (event) {
+        if (window.location.pathname.includes('profile') && typeof window._openPwdModal === 'function') {
+          event.preventDefault();
+          window._openPwdModal();
+          return;
+        }
+        window.location.href = '/profile.html#change-password';
+      });
+    }
   }
 
   /** EMPLOYEE: không vào dashboard / phòng ban / nhân viên / lương / đánh giá (chỉ chấm công & nghỉ phép & hồ sơ). */

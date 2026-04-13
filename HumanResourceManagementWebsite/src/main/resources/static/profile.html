@@ -641,6 +641,10 @@ document.addEventListener('hrm:frags-ready', function (e) {
 
   // Expose so navbar "Đổi mật khẩu" link can open modal directly on this page
   window._openPwdModal = openPwdModal;
+
+  if (window.location.hash === '#change-password') {
+    openPwdModal();
+  }
 });
 
 // Enter on password fields
