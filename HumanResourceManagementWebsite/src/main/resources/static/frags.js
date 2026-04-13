@@ -66,6 +66,7 @@
       return hash === '#leave' ? 'leave' : 'attendance';
     }
     if (path.includes('assistant')) return 'assistant';
+    if (path.includes('profile')) return 'profile';
     return '';
   }
 
@@ -116,7 +117,10 @@
     }
 
     el.querySelectorAll('[data-nav]').forEach(function (link) {
-      if (link.dataset.nav === currentNav) link.classList.add('active');
+      var nav = link.dataset.nav;
+      if (nav === currentNav || (currentNav === 'profile' && (nav === 'profile' || nav === 'profile-pwd'))) {
+        link.classList.add('active');
+      }
       const allowed = link.dataset.roles;
       if (allowed && !roleAllowed(allowed, role)) {
         link.style.display = 'none';

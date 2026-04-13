@@ -2,6 +2,7 @@ package org.example.hrmsystem.service;
 
 import org.example.hrmsystem.dto.EmployeeRequest;
 import org.example.hrmsystem.dto.EmployeeResponse;
+import org.example.hrmsystem.dto.ProfileSelfUpdateRequest;
 import org.example.hrmsystem.exception.DuplicateResourceException;
 import org.example.hrmsystem.exception.ResourceNotFoundException;
 import org.example.hrmsystem.model.*;
@@ -163,6 +164,63 @@ public class EmployeeService {
 
         applyFields(emp, req);
         return toResponse(employeeRepository.save(emp));
+    }
+
+    /**
+     * Nhân viên (hoặc admin/HR có {@code users.employee_id}) tự cập nhật: họ tên, email, SĐT, giới tính, ngày sinh.
+     * Đổi email đồng bộ {@code users.username} nếu tài khoản gắn nhân viên và đăng nhập theo email.
+     */
+    @Transactional
+    public EmployeeResponse updateSelfProfile(AppUserDetails actor, ProfileSelfUpdateRequest dto) {
+        Long empId = actor.getEmployeeId();
+        if (empId == null) {
+            throw new AccessDeniedException("Tài khoản chưa gắn hồ sơ nhân viên — không cập nhật được tại đây.");
+        }
+        Employee emp = getOrThrow(empId);
+        String emailNorm = null;
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            emailNorm = dto.getEmail().trim();
+            if (!emailNorm.matches("^[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}$")) {
+                throw new IllegalArgumentException("Email không hợp lệ");
+            }
+        }
+        validateUnique(null, emailNorm, empId);
+
+        emp.setFullName(dto.getFullName().trim());
+        emp.setEmail(emailNorm);
+        emp.setPhone(dto.getPhone() != null && !dto.getPhone().isBlank() ? dto.getPhone().trim() : null);
+        emp.setDateOfBirth(dto.getDateOfBirth());
+
+        if (dto.getGender() != null && !dto.getGender().isBlank()) {
+            try {
+                emp.setGender(Gender.valueOf(dto.getGender().trim().toUpperCase()));
+            } catch (IllegalArgumentException ignored) {
+                // giữ giới tính cũ nếu giá trị không hợp lệ
+            }
+        }
+
+        syncLoginUsernameFromEmail(empId, emailNorm);
+
+        return toResponse(employeeRepository.save(emp));
+    }
+
+    private void syncLoginUsernameFromEmail(Long employeeId, String email) {
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        String newUsername = email.trim().toLowerCase();
+        userAccountRepository.findByEmployeeId(employeeId).ifPresent(acc -> {
+            if (newUsername.equals(acc.getUsername())) {
+                return;
+            }
+            userAccountRepository.findByUsername(newUsername).ifPresent(other -> {
+                if (!other.getId().equals(acc.getId())) {
+                    throw new DuplicateResourceException("Email đã được dùng làm tên đăng nhập cho tài khoản khác.");
+                }
+            });
+            acc.setUsername(newUsername);
+            userAccountRepository.save(acc);
+        });
     }
 
     // ── Delete (soft: set RESIGNED) ───────────────────────────────────────────

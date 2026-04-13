@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,7 +126,9 @@ public class LeaveRequestService {
     }
 
     /**
-     * HR / ADMIN: toàn bộ đơn chờ duyệt. MANAGER: chỉ nhân viên thuộc phòng quản lý.
+     * ADMIN / HR: đơn chờ duyệt toàn công ty, <strong>trừ đơn của chính người đăng nhập</strong>
+     * (Admin nộp đơn → HR duyệt; HR nộp đơn → Admin duyệt; không tự thấy / tự duyệt đơn của mình).
+     * MANAGER: chỉ NV thuộc phòng quản lý, cũng loại trừ đơn của chính manager.
      */
     public Map<String, Object> listPending(AppUserDetails reviewer, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -134,19 +137,23 @@ public class LeaveRequestService {
             throw new AccessDeniedException("Employees cannot view the approval queue");
         }
 
+        Long selfKey = resolveActorEmployeeKey(reviewer);
         Page<LeaveRequest> pageResult;
         if (role == Role.MANAGER) {
             Long mgrKey = resolveActorEmployeeKey(reviewer);
-            Set<Long> visible = managerEmployeeScopeService.visibleEmployeeIdsForManager(mgrKey);
+            Set<Long> visible = new HashSet<>(managerEmployeeScopeService.visibleEmployeeIdsForManager(mgrKey));
+            visible.remove(selfKey);
             if (visible.isEmpty()) {
                 pageResult = Page.empty(pageable);
             } else {
                 pageResult = leaveRequestRepository.findByStatusAndEmployeeIdInOrderByCreatedAtDesc(
                         LeaveStatus.PENDING, visible, pageable);
             }
+        } else if (role == Role.ADMIN || role == Role.HR) {
+            pageResult = leaveRequestRepository.findByStatusAndEmployeeIdNotOrderByCreatedAtDesc(
+                    LeaveStatus.PENDING, selfKey, pageable);
         } else {
-            pageResult = leaveRequestRepository.findByStatusOrderByCreatedAtDesc(
-                    LeaveStatus.PENDING, pageable);
+            pageResult = Page.empty(pageable);
         }
 
         List<LeaveRequestResponse> content = pageResult.getContent().stream()
@@ -308,6 +315,11 @@ public class LeaveRequestService {
         Role role = Role.valueOf(reviewer.getRole());
         if (role == Role.EMPLOYEE) {
             throw new AccessDeniedException("Employees cannot review leave requests");
+        }
+        Long selfKey = resolveActorEmployeeKey(reviewer);
+        if (selfKey != null && selfKey.equals(req.getEmployeeId())) {
+            throw new AccessDeniedException(
+                    "Không được duyệt hoặc từ chối đơn nghỉ của chính mình — nhờ Admin hoặc HR xử lý theo quy định");
         }
         if (role == Role.ADMIN || role == Role.HR) {
             return;

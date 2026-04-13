@@ -1,13 +1,17 @@
 package org.example.hrmsystem.controller;
 
+import jakarta.validation.Valid;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.example.hrmsystem.dto.EmployeeResponse;
+import org.example.hrmsystem.dto.ProfileSelfUpdateRequest;
 import org.example.hrmsystem.model.UserAccount;
 import org.example.hrmsystem.repository.UserAccountRepository;
 import org.example.hrmsystem.security.AppUserDetails;
 import org.example.hrmsystem.service.EmployeeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,6 +48,39 @@ public class ProfileController {
         }
         EmployeeResponse emp = employeeService.findById(employeeId);
         return ResponseEntity.ok(emp);
+    }
+
+    /**
+     * PUT /api/profile/me
+     * Cập nhật thông tin cá nhân (họ tên, email, SĐT, giới tính, ngày sinh). Cần {@code users.employee_id}.
+     * Nếu đổi email trùng luật đăng nhập, {@code reauthRequired} = true (JWT cũ không còn khớp username).
+     */
+    @PutMapping("/me")
+    public ResponseEntity<?> updateMyProfile(
+            @AuthenticationPrincipal AppUserDetails userDetails,
+            @Valid @RequestBody ProfileSelfUpdateRequest body
+    ) {
+        Long employeeId = userDetails.getEmployeeId();
+        if (employeeId == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Tài khoản chưa gắn hồ sơ nhân viên — không cập nhật được tại đây."));
+        }
+        String loginBefore = userDetails.getUsername();
+        EmployeeResponse updated;
+        try {
+            updated = employeeService.updateSelfProfile(userDetails, body);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", ex.getMessage() != null ? ex.getMessage() : "Dữ liệu không hợp lệ"));
+        }
+        String loginAfter = userAccountRepository.findByEmployeeId(employeeId)
+                .map(UserAccount::getUsername)
+                .orElse(loginBefore);
+        boolean reauthRequired = !loginBefore.equalsIgnoreCase(loginAfter);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("profile", updated);
+        out.put("reauthRequired", reauthRequired);
+        return ResponseEntity.ok(out);
     }
 
     /**

@@ -21,6 +21,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
 
     Page<LeaveRequest> findByStatusOrderByCreatedAtDesc(LeaveStatus status, Pageable pageable);
 
+    /** Đơn chờ duyệt, loại trừ đơn của chính người xem (Admin/HR không tự duyệt đơn của mình). */
+    Page<LeaveRequest> findByStatusAndEmployeeIdNotOrderByCreatedAtDesc(
+            LeaveStatus status,
+            Long excludeEmployeeId,
+            Pageable pageable);
+
     Page<LeaveRequest> findByStatusAndEmployeeIdInOrderByCreatedAtDesc(
             LeaveStatus status,
             Collection<Long> employeeIds,
