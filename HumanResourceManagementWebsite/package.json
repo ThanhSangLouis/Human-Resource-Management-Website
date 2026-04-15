@@ -1,0 +1,12 @@
+{
+  "name": "hrm-system-cypress",
+  "private": true,
+  "scripts": {
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^14.2.1"
+  }
+}
