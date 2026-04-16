@@ -86,7 +86,7 @@ public class PerformanceReviewService {
     @Transactional(readOnly = true)
     public PerformanceReviewResponse getById(Long id, Role role, Long actorEmployeeKey) {
         PerformanceReview r = performanceReviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Performance review not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản đánh giá"));
         if (role == Role.EMPLOYEE) {
             throw new AccessDeniedException("Không có quyền xem đánh giá hiệu suất");
         }
@@ -136,9 +136,9 @@ public class PerformanceReviewService {
             Long actorEmployeeKey
     ) {
         PerformanceReview r = performanceReviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Performance review not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản đánh giá"));
         if (r.getStatus() != PerformanceReviewStatus.DRAFT) {
-            throw new IllegalArgumentException("Chỉ chỉnh được bản ghi ở trạng thái DRAFT");
+            throw new IllegalArgumentException("Chỉ sửa được đánh giá đang ở trạng thái bản nháp");
         }
         assertCanWriteReviewForEmployee(role, actorEmployeeKey, r.getEmployeeId());
 
@@ -157,9 +157,9 @@ public class PerformanceReviewService {
     @Transactional
     public PerformanceReviewResponse submit(Long id, Role role, Long actorEmployeeKey) {
         PerformanceReview r = performanceReviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Performance review not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản đánh giá"));
         if (r.getStatus() != PerformanceReviewStatus.DRAFT) {
-            throw new IllegalArgumentException("Chỉ gửi duyệt từ trạng thái DRAFT");
+            throw new IllegalArgumentException("Chỉ gửi duyệt được khi đánh giá còn ở trạng thái bản nháp");
         }
         assertCanWriteReviewForEmployee(role, actorEmployeeKey, r.getEmployeeId());
         if (r.getScore() == null) {
@@ -176,9 +176,10 @@ public class PerformanceReviewService {
     @Transactional
     public PerformanceReviewResponse approve(Long id, Role role, Long actorEmployeeKey) {
         PerformanceReview r = performanceReviewRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Performance review not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bản đánh giá"));
         if (r.getStatus() != PerformanceReviewStatus.SUBMITTED) {
-            throw new IllegalArgumentException("Chỉ duyệt khi trạng thái SUBMITTED");
+            throw new IllegalArgumentException(
+                    "Chỉ phê duyệt được khi đánh giá đang chờ phê duyệt (quản lý đã bấm Gửi duyệt). Bản nháp phải gửi duyệt trước; bản đã phê duyệt không duyệt lại.");
         }
         assertCanApprove(role);
 

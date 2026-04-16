@@ -17,11 +17,13 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,17 +36,20 @@ public class ExcelExportService {
     private final AttendanceService attendanceService;
     private final SalaryHistoryRepository salaryHistoryRepository;
     private final EmployeeRepository employeeRepository;
+    private final PayrollService payrollService;
 
     public ExcelExportService(
             EmployeeService employeeService,
             AttendanceService attendanceService,
             SalaryHistoryRepository salaryHistoryRepository,
-            EmployeeRepository employeeRepository
+            EmployeeRepository employeeRepository,
+            PayrollService payrollService
     ) {
         this.employeeService = employeeService;
         this.attendanceService = attendanceService;
         this.salaryHistoryRepository = salaryHistoryRepository;
         this.employeeRepository = employeeRepository;
+        this.payrollService = payrollService;
     }
 
     /**
@@ -269,10 +274,12 @@ public class ExcelExportService {
         Map<Long, Employee> em = employeeRepository.findAllById(
                 list.stream().map(SalaryHistory::getEmployeeId).collect(Collectors.toSet())
         ).stream().collect(Collectors.toMap(Employee::getId, e -> e));
+        Set<Long> empIds = list.stream().map(SalaryHistory::getEmployeeId).collect(Collectors.toSet());
+        Map<Long, BigDecimal> workUnits = payrollService.workDayUnitsForMonth(empIds, ym);
 
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("Bảng lương");
-            for (int c = 0; c < 12; c++) {
+            for (int c = 0; c < 13; c++) {
                 sheet.setColumnWidth(c, 14 * 256);
             }
             sheet.setColumnWidth(2, 22 * 256);
@@ -282,13 +289,13 @@ public class ExcelExportService {
             Cell t = titleRow.createCell(0);
             t.setCellValue("BẢNG LƯƠNG – " + ym);
             t.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
 
             CellStyle headerStyle = createHeaderStyle(wb);
             Row hr = sheet.createRow(2);
             String[] headers = {
-                    "STT", "Mã NV", "Họ tên", "Lương CB", "Thưởng", "Thuế", "BHXH", "Khác", "Thực nhận",
-                    "Tháng", "TT thanh toán", "Ghi chú"
+                    "STT", "Mã NV", "Họ tên", "Lương HĐ×công", "Thưởng", "Thuế", "BHXH", "Khác", "Công QĐ",
+                    "Thực nhận", "Tháng", "TT thanh toán", "Ghi chú"
             };
             for (int i = 0; i < headers.length; i++) {
                 Cell c = hr.createCell(i);
@@ -313,10 +320,12 @@ public class ExcelExportService {
                 putMoney(excelRow, 5, sh.getTax(), numStyle, base);
                 putMoney(excelRow, 6, sh.getInsurance(), numStyle, base);
                 putMoney(excelRow, 7, sh.getOtherDeduction(), numStyle, base);
-                putMoney(excelRow, 8, sh.getFinalSalary(), numStyle, base);
-                createCell(excelRow, 9, sh.getSalaryMonth() != null ? sh.getSalaryMonth().format(DATE_FMT) : "", base);
-                createCell(excelRow, 10, sh.getPaymentStatus() != null ? sh.getPaymentStatus().name() : "", base);
-                createCell(excelRow, 11, nullSafe(sh.getNote()), base);
+                BigDecimal wu = workUnits.getOrDefault(sh.getEmployeeId(), BigDecimal.ZERO);
+                putMoney(excelRow, 8, wu, numStyle, base);
+                putMoney(excelRow, 9, sh.getFinalSalary(), numStyle, base);
+                createCell(excelRow, 10, sh.getSalaryMonth() != null ? sh.getSalaryMonth().format(DATE_FMT) : "", base);
+                createCell(excelRow, 11, sh.getPaymentStatus() != null ? sh.getPaymentStatus().name() : "", base);
+                createCell(excelRow, 12, nullSafe(sh.getNote()), base);
             }
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();

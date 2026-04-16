@@ -2,6 +2,11 @@
 --  HRM SEED DATA v2 — An toàn, chạy được nhiều lần
 --  INSERT IGNORE: bỏ qua nếu bản ghi đã tồn tại
 --  Dùng subquery theo email thay vì hardcode ID
+--
+--  Thứ tự khuyến nghị (local):
+--    1) hrm_db.sql
+--    2) seed_data.sql   (file này — gồm đánh giá hiệu suất BƯỚC 5)
+--    3) hrm_db_overview_data_update.sql  — chấm công demo Overview + cùng block đánh giá (INSERT IGNORE)
 -- ============================================================
 
 USE hrm_db;
@@ -11,7 +16,7 @@ USE hrm_db;
 -- ============================================================
 INSERT IGNORE INTO employees
     (employee_code, full_name, email, phone, gender, date_of_birth,
-     position, department_id, salary_base, hire_date, status)
+     `position`, department_id, salary_base, hire_date, status)
 VALUES
     -- ── IT (dept 1) — thêm 3 nhân viên ──
     ('EMP006', 'Nguyen Thi Lan',   'lan.nguyen@hrm.com',    '0906111111', 'FEMALE', '1999-04-10', 'Frontend Developer',     1, 18000000.00, '2023-02-01', 'ACTIVE'),
@@ -116,16 +121,42 @@ VALUES
     ((SELECT id FROM employees WHERE email='yen.dinh@hrm.com'),    13000000, 200000, 1300000, 650000, 0, 11250000, '2025-03-01', 'PAID');
 
 -- ============================================================
+-- BƯỚC 5: Đánh giá hiệu suất (năm 2026 — khớp Overview / attendance demo)
+--   INSERT IGNORE: trùng (employee_id, review_year, review_quarter) thì bỏ qua
+--   reviewer_id → users (admin, hr1, manager1, hoặc email trưởng phòng seed)
+-- ============================================================
+INSERT IGNORE INTO performance_reviews
+    (employee_id, reviewer_id, review_year, review_quarter, score, review_comment, status, review_date)
+VALUES
+    ((SELECT id FROM employees WHERE email = 'lan.nguyen@hrm.com'),   (SELECT id FROM users WHERE username = 'manager1'),          2026, 1, 86, 'Chủ động, giao tiếp tốt với team.', 'APPROVED', '2026-03-28'),
+    ((SELECT id FROM employees WHERE email = 'duc.tran@hrm.com'),   (SELECT id FROM users WHERE username = 'manager1'),          2026, 1, 91, 'Kỹ năng backend vượt kỳ vọng.', 'APPROVED', '2026-03-28'),
+    ((SELECT id FROM employees WHERE email = 'hoa.pham@hrm.com'),    (SELECT id FROM users WHERE username = 'manager1'),          2026, 1, 84, 'Test coverage cải thiện rõ rệt.', 'SUBMITTED', '2026-03-30'),
+    ((SELECT id FROM employees WHERE email = 'mai.le@hrm.com'),      (SELECT id FROM users WHERE username = 'hr1'),               2026, 1, 88, 'Tuyển dụng đủ chỉ tiêu Q1.', 'APPROVED', '2026-03-25'),
+    ((SELECT id FROM employees WHERE email = 'hung.vo@hrm.com'),     (SELECT id FROM users WHERE username = 'hr1'),               2026, 1, 87, 'Bảng lương chính xác, đúng hạn.', 'APPROVED', '2026-03-25'),
+    ((SELECT id FROM employees WHERE email = 'thu.dang@hrm.com'),    (SELECT id FROM users WHERE username = 'hr1'),               2026, 1, 79, 'Cần cải thiện tốc độ phản hồi ticket.', 'APPROVED', '2026-03-25'),
+    ((SELECT id FROM employees WHERE email = 'minh.hoang@hrm.com'),  (SELECT id FROM users WHERE username = 'admin'),             2026, 1, 90, 'Lãnh đạo ổn định báo cáo tài chính.', 'APPROVED', '2026-03-20'),
+    ((SELECT id FROM employees WHERE email = 'bich.nguyen@hrm.com'), (SELECT id FROM users WHERE username = 'minh.hoang@hrm.com'), 2026, 1, 85, 'Báo cáo quyết toán chất lượng.', 'APPROVED', '2026-03-20'),
+    ((SELECT id FROM employees WHERE email = 'khanh.tran@hrm.com'),  (SELECT id FROM users WHERE username = 'minh.hoang@hrm.com'), 2026, 1, 82, 'Cần rút ngắn thời gian đối chiếu.', 'SUBMITTED', '2026-03-22'),
+    ((SELECT id FROM employees WHERE email = 'kim.ly@hrm.com'),      (SELECT id FROM users WHERE username = 'minh.hoang@hrm.com'), 2026, 1, 80, 'Phân tích KPI chi tiết.', 'APPROVED', '2026-03-20'),
+    ((SELECT id FROM employees WHERE email = 'long.phan@hrm.com'),   (SELECT id FROM users WHERE username = 'admin'),             2026, 1, 89, 'Chiến dịch Q1 đạt chỉ tiêu doanh số.', 'APPROVED', '2026-03-18'),
+    ((SELECT id FROM employees WHERE email = 'ngoc.nguyen@hrm.com'), (SELECT id FROM users WHERE username = 'long.phan@hrm.com'), 2026, 1, 83, 'Content social ổn định.', 'APPROVED', '2026-03-18'),
+    ((SELECT id FROM employees WHERE email = 'tuan.bui@hrm.com'),    (SELECT id FROM users WHERE username = 'long.phan@hrm.com'), 2026, 1, 86, 'Video viral đạt reach tốt.', 'APPROVED', '2026-03-18'),
+    ((SELECT id FROM employees WHERE email = 'yen.dinh@hrm.com'),    (SELECT id FROM users WHERE username = 'long.phan@hrm.com'), 2026, 1, 78, 'Khởi đầu tốt, cần học thêm analytics.', 'APPROVED', '2026-04-01'),
+    ((SELECT id FROM employees WHERE email = 'duc.tran@hrm.com'),    (SELECT id FROM users WHERE username = 'manager1'),          2026, 2, NULL, 'Nháp đánh giá Q2 — chờ buổi họp mid-year.', 'DRAFT', NULL),
+    ((SELECT id FROM employees WHERE email = 'mai.le@hrm.com'),      (SELECT id FROM users WHERE username = 'hr1'),               2026, 2, NULL, 'Nháp đánh giá Q2.', 'DRAFT', NULL),
+    ((SELECT id FROM employees WHERE email = 'yen.dinh@hrm.com'),    (SELECT id FROM users WHERE username = 'long.phan@hrm.com'), 2026, 2, NULL, 'Nháp KPI Q2.', 'DRAFT', NULL);
+
+-- ============================================================
 -- VERIFY: Kết quả mỗi phòng ban
 -- ============================================================
 SELECT
     d.id,
     d.name                        AS phong_ban,
     mgr.full_name                 AS truong_phong,
-    mgr.position                  AS chuc_vu_truong_phong,
+    mgr.`position`                AS chuc_vu_truong_phong,
     COUNT(e.id)                   AS tong_nhan_vien
 FROM departments d
 LEFT JOIN employees mgr ON mgr.id = d.manager_id
 LEFT JOIN employees e   ON e.department_id = d.id AND e.status = 'ACTIVE'
-GROUP BY d.id, d.name, mgr.full_name, mgr.position
+GROUP BY d.id, d.name, mgr.full_name, mgr.`position`
 ORDER BY d.id;

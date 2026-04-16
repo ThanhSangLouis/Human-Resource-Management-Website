@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payroll")
@@ -54,6 +55,19 @@ public class PayrollController {
     @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public ResponseEntity<PayrollGenerateResult> generate(@Valid @RequestBody PayrollGenerateRequest request) {
         return ResponseEntity.ok(payrollService.generate(request));
+    }
+
+    /**
+     * DELETE /api/payroll?month=2025-03 — xóa toàn bộ dòng lương của tháng đó.
+     */
+    @DeleteMapping
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
+    public ResponseEntity<Map<String, Object>> deleteMonth(@RequestParam String month) {
+        long deleted = payrollService.deleteMonth(month);
+        return ResponseEntity.ok(Map.of(
+                "month", month.trim(),
+                "deleted", deleted
+        ));
     }
 
     /**

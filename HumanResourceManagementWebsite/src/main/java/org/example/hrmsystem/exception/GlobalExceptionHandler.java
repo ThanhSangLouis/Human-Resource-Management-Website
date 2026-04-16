@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +47,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleIllegalArg(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("message", ex.getMessage()));
+    }
+
+    /** Tháng/ngày sai định dạng (vd. GET /api/payroll?month=...) — tránh 500 chung. */
+    @ExceptionHandler(DateTimeParseException.class)
+    public ResponseEntity<Map<String, String>> handleDateTimeParse(DateTimeParseException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", "Tháng hoặc ngày không hợp lệ (dùng định dạng yyyy-MM)."));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

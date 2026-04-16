@@ -21,6 +21,13 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long>, J
 
     List<Attendance> findByEmployeeIdAndAttendanceDateBetween(Long employeeId, LocalDate start, LocalDate end);
 
+    /** Gom chấm công nhiều nhân viên trong khoảng ngày (dùng bảng lương / công quy đổi). */
+    List<Attendance> findByEmployeeIdInAndAttendanceDateBetween(
+            Collection<Long> employeeIds,
+            LocalDate start,
+            LocalDate end
+    );
+
     boolean existsByEmployeeIdAndAttendanceDate(Long employeeId, LocalDate date);
 
     /** Số bản ghi chấm công theo trạng thái trong khoảng ngày. */

@@ -16,6 +16,8 @@ public class SalaryHistoryResponse {
     private BigDecimal tax;
     private BigDecimal insurance;
     private BigDecimal otherDeduction;
+    /** Công quy đổi trong tháng lương (từ chấm công; minh họa, không nhân trực tiếp vào công thức demo). */
+    private BigDecimal workDayUnits;
     private BigDecimal finalSalary;
     private LocalDate salaryMonth;
     private PaymentStatus paymentStatus;
@@ -34,6 +36,7 @@ public class SalaryHistoryResponse {
             BigDecimal tax,
             BigDecimal insurance,
             BigDecimal otherDeduction,
+            BigDecimal workDayUnits,
             BigDecimal finalSalary,
             LocalDate salaryMonth,
             PaymentStatus paymentStatus,
@@ -48,6 +51,7 @@ public class SalaryHistoryResponse {
         this.tax = tax;
         this.insurance = insurance;
         this.otherDeduction = otherDeduction;
+        this.workDayUnits = workDayUnits;
         this.finalSalary = finalSalary;
         this.salaryMonth = salaryMonth;
         this.paymentStatus = paymentStatus;
@@ -88,6 +92,14 @@ public class SalaryHistoryResponse {
 
     public BigDecimal getOtherDeduction() {
         return otherDeduction;
+    }
+
+    public BigDecimal getWorkDayUnits() {
+        return workDayUnits;
+    }
+
+    public void setWorkDayUnits(BigDecimal workDayUnits) {
+        this.workDayUnits = workDayUnits;
     }
 
     public BigDecimal getFinalSalary() {

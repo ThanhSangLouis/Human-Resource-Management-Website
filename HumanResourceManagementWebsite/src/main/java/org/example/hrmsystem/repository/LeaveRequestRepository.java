@@ -47,6 +47,23 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             LocalDate dateStart
     );
 
+    /**
+     * Số đơn APPROVED mà ngày {@code refDate} nằm trong [startDate, endDate] (hai cận gồm cả ngày đó).
+     * Dùng cùng một quy tắc với danh sách đơn đã duyệt (theo ngày, không có giờ trong DB).
+     */
+    @Query("""
+            SELECT COUNT(lr) FROM LeaveRequest lr
+            WHERE lr.employeeId = :employeeId
+              AND lr.status = :approved
+              AND lr.startDate <= :refDate
+              AND lr.endDate >= :refDate
+            """)
+    long countApprovedLeavesCoveringDate(
+            @Param("employeeId") Long employeeId,
+            @Param("approved") LeaveStatus approved,
+            @Param("refDate") LocalDate refDate
+    );
+
     List<LeaveRequest> findByStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
             LeaveStatus status,
             LocalDate endBound,

@@ -41,19 +41,22 @@ public class LeaveRequestService {
     private final ManagerEmployeeScopeService managerEmployeeScopeService;
     private final AttendanceLeaveSyncService attendanceLeaveSyncService;
     private final NotificationService notificationService;
+    private final EmployeeEmploymentLeaveSyncService employeeEmploymentLeaveSyncService;
 
     public LeaveRequestService(
             LeaveRequestRepository leaveRequestRepository,
             EmployeeRepository employeeRepository,
             ManagerEmployeeScopeService managerEmployeeScopeService,
             AttendanceLeaveSyncService attendanceLeaveSyncService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            EmployeeEmploymentLeaveSyncService employeeEmploymentLeaveSyncService
     ) {
         this.leaveRequestRepository = leaveRequestRepository;
         this.employeeRepository = employeeRepository;
         this.managerEmployeeScopeService = managerEmployeeScopeService;
         this.attendanceLeaveSyncService = attendanceLeaveSyncService;
         this.notificationService = notificationService;
+        this.employeeEmploymentLeaveSyncService = employeeEmploymentLeaveSyncService;
     }
 
     @Transactional
@@ -265,6 +268,8 @@ public class LeaveRequestService {
 
         attendanceLeaveSyncService.syncOnLeaveForApprovedRange(
                 req.getEmployeeId(), req.getStartDate(), req.getEndDate());
+
+        employeeEmploymentLeaveSyncService.syncEmploymentStatusForEmployee(req.getEmployeeId());
 
         employeeRepository.findById(req.getEmployeeId()).ifPresent(emp ->
                 notificationService.notifyLeaveDecision(

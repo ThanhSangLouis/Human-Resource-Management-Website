@@ -49,6 +49,9 @@
     .btn-export:hover { background:#f0fdf4; }
     .btn-ghost { background:none; border:1px solid #dde2ee; border-radius:8px; padding:9px 16px; font-size:13.5px; font-weight:500; color:#5a6a85; cursor:pointer; }
     .btn-ghost:hover { border-color:#2c3e8c; color:#2c3e8c; }
+    .btn-danger { background:#fff; border:1.5px solid #e53e3e; border-radius:8px; padding:9px 16px; font-size:13.5px; font-weight:600; color:#c53030; cursor:pointer; }
+    .btn-danger:hover { background:#fff5f5; }
+    .btn-danger:disabled { opacity:.55; cursor:not-allowed; }
 
     .card { background:#fff; border-radius:12px; border:1px solid #e5e9f2; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.04); }
     table { width:100%; border-collapse:collapse; min-width:900px; }
@@ -91,7 +94,6 @@
     <div class="page-header">
       <div>
         <div class="page-title">Bảng lương</div>
-        <p class="page-desc">Xem, sinh bảng lương theo tháng cho toàn bộ nhân viên đang làm việc (ACTIVE), và xuất Excel. Tháng đã có dữ liệu sẽ không bị ghi đè khi sinh lại.</p>
       </div>
     </div>
 
@@ -116,6 +118,9 @@
           Xuất Excel
         </button>
         <button type="button" class="btn-ghost" onclick="loadPayroll()">Tải lại</button>
+        <button type="button" class="btn-danger" id="btn-delete-month" onclick="deletePayrollMonth()">
+          Xóa bảng tháng này
+        </button>
       </div>
 
       <div class="card">
@@ -124,17 +129,18 @@
             <tr>
               <th>STT</th>
               <th>Nhân viên</th>
-              <th class="num">Lương CB</th>
+              <th class="num" title="Phần lương HĐ đã nhân tỷ lệ công÷26">Lương (HĐ×công)</th>
               <th class="num">Thưởng</th>
               <th class="num">Thuế</th>
               <th class="num">BHXH</th>
               <th class="num">Khác</th>
+              <th class="num" title="Quy đổi từ chấm công tháng: đi làm/muộn/nghỉ phép = 1; nửa ngày = 0.5; vắng = 0">Công QĐ</th>
               <th class="num">Thực nhận</th>
               <th>TT thanh toán</th>
             </tr>
           </thead>
           <tbody id="payroll-tbody">
-            <tr class="loading-row"><td colspan="9"><span class="spinner"></span> Đang tải...</td></tr>
+            <tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải...</td></tr>
           </tbody>
         </table>
         <div class="pagination-row" id="payroll-pager" style="display:none;">
@@ -188,7 +194,7 @@ function logout() { HRMFrags.logout(); }
 async function apiFetch(path, options = {}) {
   const headers = { 'Authorization': 'Bearer ' + token, ...(options.headers || {}) };
   const method = (options.method || 'GET').toUpperCase();
-  if (method !== 'GET' && method !== 'HEAD') {
+  if (method !== 'GET' && method !== 'HEAD' && method !== 'DELETE') {
     headers['Content-Type'] = headers['Content-Type'] || 'application/json';
   }
   const res = await fetch(API_BASE + path, { ...options, headers });
@@ -203,6 +209,14 @@ function fmtMoney(v) {
   return n.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
+/** Công quy đổi (không phải tiền) */
+function fmtCong(v) {
+  if (v == null || v === '') return '—';
+  const n = Number(v);
+  if (Number.isNaN(n)) return '—';
+  return n.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
 function getMonth() {
   const v = document.getElementById('sel-month').value;
   return v || defaultMonthStr();
@@ -211,13 +225,13 @@ function getMonth() {
 async function loadPayroll() {
   const tbody = document.getElementById('payroll-tbody');
   const month = getMonth();
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="9"><span class="spinner"></span> Đang tải...</td></tr>';
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="10"><span class="spinner"></span> Đang tải...</td></tr>';
 
   const params = new URLSearchParams({ month, page: state.page, size: state.size });
   try {
     const res = await apiFetch('/payroll?' + params.toString());
     if (res.status === 403) {
-      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">Không có quyền (403)</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">Không có quyền (403)</div></td></tr>';
       return;
     }
     if (!res.ok) throw new Error();
@@ -226,7 +240,7 @@ async function loadPayroll() {
     state.totalPages = data.totalPages ?? 0;
 
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">Chưa có dữ liệu lương cho tháng này.<br/>Nhấn <strong>Sinh bảng lương</strong> để tạo.</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">Chưa có dữ liệu lương cho tháng này.<br/>Nhấn <strong>Sinh bảng lương</strong> để tạo.</div></td></tr>';
     } else {
       tbody.innerHTML = rows.map((r, i) => {
         const st = (r.paymentStatus || '').toString();
@@ -241,6 +255,7 @@ async function loadPayroll() {
           <td class="num">${fmtMoney(r.tax)}</td>
           <td class="num">${fmtMoney(r.insurance)}</td>
           <td class="num">${fmtMoney(r.otherDeduction)}</td>
+          <td class="num">${fmtCong(r.workDayUnits)}</td>
           <td class="num"><strong>${fmtMoney(r.finalSalary)}</strong></td>
           <td><span class="badge ${esc(st)}">${esc(st)}</span></td>
         </tr>`;
@@ -255,7 +270,7 @@ async function loadPayroll() {
     document.getElementById('pg-prev').disabled = (data.number ?? 0) <= 0;
     document.getElementById('pg-next').disabled = (data.number ?? 0) >= state.totalPages - 1;
   } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">Lỗi tải dữ liệu</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">Lỗi tải dữ liệu</div></td></tr>';
   }
 }
 
@@ -290,6 +305,30 @@ async function generatePayroll() {
     const result = await res.json();
     const msg = (result.messages && result.messages[0]) || `Đã tạo ${result.created}, bỏ qua ${result.skippedAlreadyExists}`;
     showToast(msg);
+    state.page = 0;
+    loadPayroll();
+  } catch (_) {
+    showToast('Lỗi kết nối', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deletePayrollMonth() {
+  const month = getMonth();
+  if (!confirm('Xóa toàn bộ bản ghi lương tháng ' + month + '? Không thể hoàn tác.')) return;
+  const btn = document.getElementById('btn-delete-month');
+  btn.disabled = true;
+  try {
+    const res = await apiFetch('/payroll?month=' + encodeURIComponent(month), { method: 'DELETE' });
+    if (res.status === 403) { showToast('Không có quyền', 'error'); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.message || 'Xóa thất bại', 'error');
+      return;
+    }
+    const data = await res.json();
+    showToast('Đã xóa ' + (data.deleted ?? 0) + ' bản ghi.');
     state.page = 0;
     loadPayroll();
   } catch (_) {

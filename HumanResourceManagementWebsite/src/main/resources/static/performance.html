@@ -178,6 +178,18 @@ try { currentUser = JSON.parse(localStorage.getItem('hrm_user') || 'null'); } ca
 let state = { page: 0, size: 12, totalPages: 0 };
 let employeesCache = [];
 
+/** Hiển thị tiếng Việt; API vẫn trả DRAFT / SUBMITTED / APPROVED (class CSS giữ nguyên). */
+const REVIEW_STATUS_LABEL = {
+  DRAFT: 'Bản nháp',
+  SUBMITTED: 'Chờ phê duyệt',
+  APPROVED: 'Đã phê duyệt'
+};
+
+function reviewStatusLabel(st) {
+  const k = (st || '').toString().trim().toUpperCase();
+  return REVIEW_STATUS_LABEL[k] || st || '—';
+}
+
 function logout() { HRMFrags.logout(); }
 
 function canAccess() {
@@ -185,7 +197,7 @@ function canAccess() {
   return r === 'ADMIN' || r === 'HR' || r === 'MANAGER';
 }
 
-/** Phê duyệt cuối (SUBMITTED → APPROVED): chỉ Admin / HR */
+/** Phê duyệt cuối (chờ phê duyệt → đã phê duyệt): chỉ Admin / HR */
 function canApproveOfficial() {
   const r = currentUser && String(currentUser.role || '').trim().toUpperCase();
   return r === 'ADMIN' || r === 'HR';
@@ -299,7 +311,7 @@ async function submitCreate() {
       showToast(data.message || ('Tạo thất bại (' + res.status + ')'), true);
       return;
     }
-    showToast('Đã tạo bản nháp (DRAFT)');
+    showToast('Đã tạo bản nháp');
     closeCreateModal();
     state.page = 0;
     loadReviews();
@@ -352,7 +364,7 @@ async function doSubmit(id) {
       showToast(data.message || ('Không gửi được (' + res.status + ')'), true);
       return;
     }
-    showToast('Đã chuyển sang SUBMITTED');
+    showToast('Đã gửi duyệt (chờ phê duyệt)');
     loadReviews();
   } catch (_) {
     showToast('Lỗi kết nối', true);
@@ -370,7 +382,7 @@ async function doApprove(id) {
       showToast(data.message || ('Không duyệt được (' + res.status + ')'), true);
       return;
     }
-    showToast('Đã APPROVED');
+    showToast('Đã phê duyệt');
     loadReviews();
   } catch (_) {
     showToast('Lỗi kết nối', true);
@@ -439,7 +451,7 @@ async function loadReviews() {
           '<td>' + esc(r.reviewYear) + '</td>' +
           '<td>Q' + esc(r.reviewQuarter) + '</td>' +
           '<td class="num">' + esc(score) + '</td>' +
-          '<td><span class="badge ' + esc(st) + '">' + esc(st) + '</span></td>' +
+          '<td><span class="badge ' + esc(st) + '">' + esc(reviewStatusLabel(st)) + '</span></td>' +
           '<td style="font-size:12px;color:#5a6a85;white-space:nowrap;">' + esc(rd) + '</td>' +
           '<td class="cmt">' + cmt + '</td>' +
           '<td style="white-space:nowrap;">' + actions + '</td>' +
@@ -487,7 +499,7 @@ document.addEventListener('DOMContentLoaded', boot);
 <!-- Modal: tạo -->
 <div id="modal-create" class="modal-backdrop" onclick="if(event.target===this)closeCreateModal()">
   <div class="modal-card" onclick="event.stopPropagation()">
-    <h3>Tạo đánh giá (DRAFT)</h3>
+    <h3>Tạo đánh giá (bản nháp)</h3>
     <label for="mc-emp">Nhân viên</label>
     <select id="mc-emp"></select>
     <label for="mc-year">Năm</label>
@@ -510,10 +522,10 @@ document.addEventListener('DOMContentLoaded', boot);
   </div>
 </div>
 
-<!-- Modal: sửa DRAFT -->
+<!-- Modal: sửa bản nháp -->
 <div id="modal-edit" class="modal-backdrop" onclick="if(event.target===this)closeEditModal()">
   <div class="modal-card" onclick="event.stopPropagation()">
-    <h3>Sửa bản nháp (DRAFT)</h3>
+    <h3>Sửa bản nháp</h3>
     <input type="hidden" id="ed-id" />
     <label for="ed-score">Điểm (0–100)</label>
     <input type="number" id="ed-score" min="0" max="100" />

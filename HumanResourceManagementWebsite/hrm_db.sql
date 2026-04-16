@@ -19,6 +19,12 @@
 --  [notifications]     + employee_id FK, + notification_type, + is_read
 --  [indexes]           Bổ sung đầy đủ index cho Search & Pagination
 -- ============================================================
+--
+--  Dữ liệu mở rộng (sau khi chạy file này xong):
+--    1) seed_data.sql — thêm EMP006–EMP019, user theo email, lương mẫu, …
+--    2) hrm_db_overview_data_update.sql (tùy chọn) — chấm công demo Overview
+--  Chi tiết thứ tự ghi ở đầu từng file seed/overview.
+-- ============================================================
 
 -- Xóa DB cũ nếu có và tạo mới
 DROP DATABASE IF EXISTS hrm_db;
@@ -58,8 +64,8 @@ CREATE TABLE employees (
     -- Tăng từ 255 -> 500 để chứa URL cloud (S3/Cloudinary/Firebase)
     avatar_url    VARCHAR(500),
 
-    -- Chức danh / vị trí công việc
-    position      VARCHAR(100),
+    -- Chức danh / vị trí công việc (position là từ khóa MySQL — cần backtick)
+    `position`    VARCHAR(100),
 
     department_id BIGINT,
     salary_base   DECIMAL(12,2),
@@ -344,7 +350,7 @@ INSERT INTO departments (name, description) VALUES
 -- ------------------------------------------------------------
 INSERT INTO employees
     (employee_code, full_name, email, phone, gender, date_of_birth,
-     position, department_id, salary_base, hire_date)
+     `position`, department_id, salary_base, hire_date)
 VALUES
     ('EMP001', 'Nguyen Van Admin',    'admin@hrm.com',   '0901111111', 'MALE',   '1995-05-10', 'System Administrator', 1, 2000.00, '2022-01-01'),
     ('EMP002', 'Tran Thi HR',         'hr@hrm.com',      '0902222222', 'FEMALE', '1997-02-15', 'HR Specialist',        2, 1500.00, '2023-03-01'),
@@ -409,14 +415,14 @@ VALUES
     (2, 'ANNUAL', '2025-04-10', '2025-04-11', 2, 'Family event',      'PENDING',  NULL, NULL);
 
 -- ------------------------------------------------------------
--- Performance Reviews (Q1 - 2025)
+-- Performance Reviews (Q1 - 2026, đồng bộ seed_data / overview)
 -- ------------------------------------------------------------
 INSERT INTO performance_reviews
     (employee_id, reviewer_id, review_year, review_quarter, score, review_comment, status, review_date)
 VALUES
-    (4, 1, 2025, 1, 85, 'Good working attitude, meets expectations',   'APPROVED', '2025-03-10'),
-    (5, 3, 2025, 1, 92, 'Excellent coding skills, exceeds expectations','APPROVED', '2025-03-10'),
-    (2, 1, 2025, 1, 88, 'Strong HR skills, good communication',         'SUBMITTED','2025-03-10');
+    (4, 1, 2026, 1, 85, 'Good working attitude, meets expectations',   'APPROVED', '2026-03-10'),
+    (5, 3, 2026, 1, 92, 'Excellent coding skills, exceeds expectations','APPROVED', '2026-03-10'),
+    (2, 1, 2026, 1, 88, 'Strong HR skills, good communication',         'SUBMITTED','2026-03-10');
 
 -- ------------------------------------------------------------
 -- Salary History (tháng 3/2025)
@@ -443,7 +449,7 @@ INSERT INTO notifications
     (employee_id, title, content, receiver_email, notification_type, status, is_read)
 VALUES
     (4, 'Welcome to HRM',          'Welcome! Your account has been created.',              'emp@hrm.com',     'GENERAL',     'SENT', TRUE),
-    (3, 'Performance Review Due',  'Please complete Q1-2025 performance review for team.', 'manager@hrm.com', 'PERFORMANCE', 'SENT', FALSE),
+    (3, 'Performance Review Due',  'Please complete Q1-2026 performance review for team.', 'manager@hrm.com', 'PERFORMANCE', 'SENT', FALSE),
     (1, 'Salary Processed',        'Your salary for March 2025 has been processed.',       'admin@hrm.com',   'SALARY',      'SENT', FALSE),
     (2, 'Leave Request Approved',  'Leave request for EMP004 (2025-03-01) approved.',      'hr@hrm.com',      'LEAVE',       'SENT', TRUE),
     (5, 'Attendance Alert',        'You have been marked LATE on 2025-03-01.',             'dev@hrm.com',     'ATTENDANCE',  'SENT', FALSE);
