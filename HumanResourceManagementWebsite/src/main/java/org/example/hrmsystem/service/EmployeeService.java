@@ -151,6 +151,7 @@ public class EmployeeService {
         applyFields(emp, req);
         Employee saved = employeeRepository.save(emp);
         createUserForNewEmployee(saved, req);
+        syncLinkedAccountByEmployeeStatus(saved);
         return toResponse(saved);
     }
 
@@ -163,7 +164,9 @@ public class EmployeeService {
         if (req.getDepartmentId() != null) validateDepartment(req.getDepartmentId());
 
         applyFields(emp, req);
-        return toResponse(employeeRepository.save(emp));
+        Employee saved = employeeRepository.save(emp);
+        syncLinkedAccountByEmployeeStatus(saved);
+        return toResponse(saved);
     }
 
     /**
@@ -229,7 +232,8 @@ public class EmployeeService {
     public void delete(Long id) {
         Employee emp = getOrThrow(id);
         emp.setStatus(EmployeeStatus.RESIGNED);
-        employeeRepository.save(emp);
+        Employee saved = employeeRepository.save(emp);
+        syncLinkedAccountByEmployeeStatus(saved);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
@@ -295,6 +299,26 @@ public class EmployeeService {
             return emp.getEmail().trim().toLowerCase();
         }
         return emp.getEmployeeCode().trim();
+    }
+
+    /**
+     * Đồng bộ trạng thái tài khoản theo trạng thái nhân viên:
+     * - RESIGNED  -> khóa tài khoản
+     * - ACTIVE/INACTIVE -> mở khóa tài khoản
+     */
+    private void syncLinkedAccountByEmployeeStatus(Employee emp) {
+        if (emp.getId() == null || emp.getStatus() == null) {
+            return;
+        }
+        userAccountRepository.findByEmployeeId(emp.getId()).ifPresent(acc -> {
+            boolean shouldBeActive = emp.getStatus() != EmployeeStatus.RESIGNED;
+            if (acc.isActive() == shouldBeActive) {
+                return;
+            }
+            acc.setActive(shouldBeActive);
+            acc.touchUpdatedAt();
+            userAccountRepository.save(acc);
+        });
     }
 
     private void applyFields(Employee emp, EmployeeRequest req) {

@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/admin/users")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
+    private static final String EMAIL_REGEX = "^[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}$";
 
     private final UserAccountRepository userAccountRepository;
     private final EmployeeRepository employeeRepository;
@@ -97,6 +98,12 @@ public class AdminUserController {
         }
         if (employeeCode.isBlank()) {
             employeeCode = "EMP-" + System.currentTimeMillis();
+        }
+        if (employeeRepository.findByEmployeeCode(employeeCode).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Mã nhân viên đã tồn tại."));
+        }
+        if (!email.isBlank() && !email.matches(EMAIL_REGEX)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email không đúng định dạng."));
         }
 
         EmployeeRequest req = new EmployeeRequest();

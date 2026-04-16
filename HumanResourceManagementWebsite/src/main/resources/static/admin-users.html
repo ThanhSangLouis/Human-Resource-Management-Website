@@ -324,6 +324,10 @@
       const role = document.getElementById("new-emp-role").value;
       const password = document.getElementById("new-emp-password").value;
       if (!fullName) { alert("Họ tên không được để trống"); return; }
+      if (email && !/^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/.test(email)) {
+        alert("Email không đúng định dạng");
+        return;
+      }
 
       const body = { fullName, email, employeeCode, password, role };
       if (loginUsername) body.loginUsername = loginUsername;
@@ -396,7 +400,11 @@
 
     async function resetPassword(id, username) {
       const pwd = prompt(`Nhập mật khẩu mới cho ${username}:`);
-      if (!pwd) return;
+      if (pwd === null) return;
+      if (pwd.trim().length < 6) {
+        alert("Mật khẩu mới phải có ít nhất 6 ký tự.");
+        return;
+      }
       const res = await api(`${API}/${id}/password`, {
         method: "PUT",
         body: JSON.stringify({ newPassword: pwd })
