@@ -134,7 +134,9 @@ public class AiIntentClassifier {
         String n = guardrail.normalizeForMatch(message);
 
         // CHITCHAT tr\u01b0\u1edbc ti\u00ean \u2014 ch\u00e0o h\u1ecfi / x\u00e3 giao kh\u00f4ng \u0111\u01b0\u1ee3c r\u01a1i v\u00e0o FAQ
-        if (STANDALONE_HI_OR_HEY.matcher(n).find() || containsAny(n, KW_CHITCHAT)) {
+        // Guard: câu hỏi policy/rules không được rơi vào CHITCHAT do trùng từ ngắn.
+        if ((STANDALONE_HI_OR_HEY.matcher(n).find() || containsAny(n, KW_CHITCHAT))
+                && !looksLikePolicyOrRulesQuestion(n)) {
             return AiIntent.CHITCHAT;
         }
 
