@@ -328,7 +328,7 @@
       </div>
       <div class="form-group">
         <label for="ep-phone">Số điện thoại</label>
-        <input type="tel" id="ep-phone" autocomplete="tel" />
+        <input type="text" id="ep-phone" inputmode="numeric" autocomplete="tel" maxlength="50" oninput="onPhoneInput(this)" />
       </div>
       <div class="form-group">
         <label for="ep-gender">Giới tính</label>
@@ -607,6 +607,10 @@ function toInputDate(isoOrDate) {
   return d.toISOString().slice(0, 10);
 }
 
+function onPhoneInput(el) {
+  el.value = el.value.replace(/\D/g, '');
+}
+
 function openEditProfileModal() {
   if (!profileData || !profileData.id) {
     showToast('Không có hồ sơ nhân viên để sửa.', 'error');
@@ -616,7 +620,7 @@ function openEditProfileModal() {
   document.getElementById('ep-form-err').classList.remove('show');
   document.getElementById('ep-fullName').value = profileData.fullName || '';
   document.getElementById('ep-email').value = profileData.email || '';
-  document.getElementById('ep-phone').value = profileData.phone || '';
+  document.getElementById('ep-phone').value = String(profileData.phone || '').replace(/\D/g, '');
   document.getElementById('ep-gender').value = profileData.gender || '';
   document.getElementById('ep-dob').value = toInputDate(profileData.dateOfBirth);
   document.getElementById('edit-profile-overlay').classList.add('show');
@@ -639,10 +643,17 @@ async function submitEditProfile() {
     return;
   }
 
+  var phone = document.getElementById('ep-phone').value.trim();
+  if (phone && !/^\d+$/.test(phone)) {
+    errEl.textContent = 'Số điện thoại chỉ được nhập chữ số (không âm).';
+    errEl.classList.add('show');
+    return;
+  }
+
   var body = {
     fullName: fullName,
     email: document.getElementById('ep-email').value.trim() || null,
-    phone: document.getElementById('ep-phone').value.trim() || null,
+    phone: phone || null,
     gender: document.getElementById('ep-gender').value || null,
     dateOfBirth: document.getElementById('ep-dob').value || null
   };

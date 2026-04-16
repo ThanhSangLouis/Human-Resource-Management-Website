@@ -44,9 +44,8 @@
     /* ── TOOLBAR ── */
     .toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
     .search-box { position:relative; flex:1; min-width:220px; max-width:320px; }
-    .search-box input { width:100%; box-sizing:border-box; padding:9px 12px 9px 44px; border:1px solid #dde2ee; border-radius:8px; font-size:13.5px; background:#fff; color:#1a2035; outline:none; transition:border-color .2s; }
+    .search-box input { width:100%; box-sizing:border-box; padding:9px 12px; border:1px solid #dde2ee; border-radius:8px; font-size:13.5px; background:#fff; color:#1a2035; outline:none; transition:border-color .2s; }
     .search-box input:focus { border-color:#2c3e8c; }
-    .search-box svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; color:#8a94a6; }
     .filter-select { border:1px solid #dde2ee; border-radius:8px; padding:9px 12px; font-size:13.5px; color:#5a6a85; outline:none; background:#fff; cursor:pointer; font-family:inherit; }
     .filter-select:focus { border-color:#2c3e8c; }
     .btn-export { background:#fff; border:1.5px solid #22c55e; border-radius:8px; padding:9px 16px; font-size:13.5px; font-weight:600; color:#15803d; cursor:pointer; display:flex; align-items:center; gap:7px; transition:all .15s; white-space:nowrap; }
@@ -186,7 +185,6 @@
     <!-- Toolbar -->
     <div class="toolbar">
       <div class="search-box">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="search-input" placeholder="Tìm kiếm tên, email, sđt..." oninput="onSearch()" />
       </div>
       <select class="filter-select" id="filter-status" onchange="onFilter()">
@@ -296,7 +294,8 @@
         </div>
         <div class="form-group">
           <label>Số điện thoại</label>
-          <input type="text" id="f-phone" placeholder="0901234567" maxlength="50" />
+          <input type="text" id="f-phone" placeholder="0901234567" maxlength="50" inputmode="numeric" autocomplete="tel" oninput="onPhoneInput(this)" />
+          <div class="error-msg" id="e-phone">Số điện thoại chỉ được nhập chữ số (không âm)</div>
         </div>
       </div>
       <div class="form-group" id="f-password-wrap" style="display:none;">
@@ -339,6 +338,7 @@
         <div class="form-group">
           <label>Lương cơ bản (VNĐ)</label>
           <input type="number" id="f-salary" placeholder="0.00" min="0" step="0.01" />
+          <div class="error-msg" id="e-salary">Lương cơ bản không được là số âm</div>
         </div>
       </div>
     </div>
@@ -573,7 +573,7 @@ async function openEditModal(id) {
     document.getElementById('f-file').value = '';
 
     document.getElementById('f-email').value = e.email||'';
-    document.getElementById('f-phone').value = e.phone||'';
+    document.getElementById('f-phone').value = String(e.phone || '').replace(/\D/g, '');
     document.getElementById('f-position').value = e.position||'';
     document.getElementById('f-gender').value = e.gender||'';
     document.getElementById('f-dob').value = e.dateOfBirth||'';
@@ -591,12 +591,20 @@ function closeFormModal() { document.getElementById('form-overlay').classList.re
 function closeOverlay(e, id) { if (e.target===e.currentTarget) document.getElementById(id).classList.remove('show'); }
 function clearErrors() { document.querySelectorAll('.error-msg').forEach(el=>el.classList.remove('show')); }
 
+/** Chỉ cho phép chữ số — không nhập được số âm hay ký tự khác */
+function onPhoneInput(el) {
+  el.value = el.value.replace(/\D/g, '');
+}
+
 async function submitForm() {
   clearErrors();
   const id = document.getElementById('emp-id').value;
   const employeeCode = document.getElementById('f-code').value.trim();
   const fullName     = document.getElementById('f-name').value.trim();
   const email        = document.getElementById('f-email').value.trim();
+  const phoneRaw     = document.getElementById('f-phone').value.trim();
+  const salaryRaw    = document.getElementById('f-salary').value.trim();
+  const salaryNum    = salaryRaw ? parseFloat(salaryRaw) : null;
 
   let valid = true;
   if (!employeeCode) { document.getElementById('e-code').classList.add('show'); valid=false; }
@@ -607,6 +615,14 @@ async function submitForm() {
     eEmail.classList.add('show');
     valid = false;
   }
+  if (phoneRaw && !/^\d+$/.test(phoneRaw)) {
+    document.getElementById('e-phone').classList.add('show');
+    valid = false;
+  }
+  if (salaryNum !== null && (Number.isNaN(salaryNum) || salaryNum < 0)) {
+    document.getElementById('e-salary').classList.add('show');
+    valid = false;
+  }
   if (!valid) return;
 
   const pw = document.getElementById('f-password').value;
@@ -614,13 +630,13 @@ async function submitForm() {
     employeeCode,
     fullName,
     email: email||null,
-    phone: document.getElementById('f-phone').value.trim()||null,
+    phone: phoneRaw || null,
     position: document.getElementById('f-position').value.trim()||null,
     gender: document.getElementById('f-gender').value||null,
     dateOfBirth: document.getElementById('f-dob').value||null,
     departmentId: document.getElementById('f-dept').value ? parseInt(document.getElementById('f-dept').value) : null,
     hireDate: document.getElementById('f-hire').value||null,
-    salaryBase: document.getElementById('f-salary').value ? parseFloat(document.getElementById('f-salary').value) : null,
+    salaryBase: salaryNum,
     status: document.getElementById('f-status').value,
   };
   if (!id && pw) payload.initialPassword = pw;
@@ -656,7 +672,17 @@ async function submitForm() {
         document.getElementById('e-email').textContent = errors.email;
         document.getElementById('e-email').classList.add('show');
       }
-      if (!errors.employeeCode && !errors.fullName && !errors.email) {
+      if (errors.phone) {
+        const ep = document.getElementById('e-phone');
+        ep.textContent = errors.phone;
+        ep.classList.add('show');
+      }
+      if (errors.salaryBase) {
+        const es = document.getElementById('e-salary');
+        es.textContent = errors.salaryBase;
+        es.classList.add('show');
+      }
+      if (!errors.employeeCode && !errors.fullName && !errors.email && !errors.phone && !errors.salaryBase) {
         showToast(err.message || 'Dữ liệu không hợp lệ', 'error');
       }
       return;

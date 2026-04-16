@@ -1,7 +1,9 @@
 package org.example.hrmsystem.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -22,6 +24,7 @@ public class EmployeeRequest {
     private String email;
 
     @Size(max = 50)
+    @Pattern(regexp = "^$|^[0-9]+$", message = "Số điện thoại chỉ được chứa chữ số (không âm)")
     private String phone;
 
     @Size(max = 100)
@@ -33,6 +36,7 @@ public class EmployeeRequest {
 
     private Long departmentId;
 
+    @DecimalMin(value = "0.0", inclusive = true, message = "Lương cơ bản không được là số âm")
     private BigDecimal salaryBase;
 
     private String status;         // ACTIVE / INACTIVE / RESIGNED

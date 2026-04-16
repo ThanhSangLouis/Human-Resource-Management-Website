@@ -1,6 +1,7 @@
 package org.example.hrmsystem.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
@@ -15,6 +16,7 @@ public class ProfileSelfUpdateRequest {
     private String email;
 
     @Size(max = 50)
+    @Pattern(regexp = "^$|^[0-9]+$", message = "Số điện thoại chỉ được chứa chữ số (không âm)")
     private String phone;
 
     /** MALE / FEMALE / OTHER hoặc để trống */
